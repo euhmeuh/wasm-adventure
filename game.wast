@@ -100,7 +100,11 @@
   (func $render (export "render") (param $t i32)
     i32.const 0x00
     call $fill_screen
-    i32.const 10
+
+    get_local $t
+    i32.const 4 ;; height offset
+    i32.load
+    i32.rem_u
     i32.const 0xFF
     call $fill_row)
 
