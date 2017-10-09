@@ -55,10 +55,12 @@
               memory = instance.exports.memory;
               imageData = new ImageData(new Uint8ClampedArray(memory.buffer, screenDataOffset, width*height*4), width, height)
 
+              let time = 0;
               setInterval(() => {
-                instance.exports.render();
+                instance.exports.render(time);
                 ctx.putImageData(imageData, 0, 0);
-              }, 33);
+                time += 1;
+              }, 33); // ~60fps
             });
           }
         </script>
