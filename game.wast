@@ -3,7 +3,7 @@
 
   (memory 1)
 
-  (func $fill_pixels (param $pos i32) (param $len i32) (param $a i32)
+  (func $fill_pixels (param $pos i32) (param $len i32) (param $step i32) (param $a i32)
     block
       loop
         get_local $pos
@@ -16,7 +16,7 @@
         call $pixel
 
         get_local $pos
-        i32.const 1
+        get_local $step
         i32.add
         set_local $pos
         br 0
@@ -41,6 +41,24 @@
     
     get_local $i
     get_local $len
+    i32.const 1
+    get_local $a
+    call $fill_pixels)
+
+  (func $fill_col (param $col i32) (param $a i32)
+    (local $len i32)
+
+    i32.const 0 ;; width offset
+    i32.load
+    i32.const 4 ;; height offset
+    i32.load
+    i32.mul
+    set_local $len
+
+    get_local $col
+    get_local $len
+    i32.const 0 ;; width offset
+    i32.load
     get_local $a
     call $fill_pixels)
 
@@ -55,6 +73,7 @@
     i32.load
     i32.mul
 
+    i32.const 1
     get_local $a
     call $fill_pixels)
 
@@ -102,6 +121,31 @@
     call $fill_screen
 
     get_local $t
+    i32.const 4 ;; height offset
+    i32.load
+    i32.rem_u
+    i32.const 0xFF
+    call $fill_row
+
+    get_local $t
+    i32.const 0 ;; width offset
+    i32.load
+    i32.rem_u
+    i32.const 0xFF
+    call $fill_col
+
+    get_local $t
+    i32.const 2
+    i32.mul
+    i32.const 0 ;; width offset
+    i32.load
+    i32.rem_u
+    i32.const 0xFF
+    call $fill_col
+
+    get_local $t
+    i32.const 3
+    i32.mul
     i32.const 4 ;; height offset
     i32.load
     i32.rem_u

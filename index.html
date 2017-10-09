@@ -7,13 +7,17 @@
           #screen-canvas {
             border: solid 1px black;
             display: block;
-            margin-left: auto;
-            margin-right: auto;
+          }
+          .centered {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
           }
         </style>
     </head>
     <body>
-        <canvas id="screen-canvas" width="256" height="256">
+        <canvas id="screen-canvas" class="centered" width="256" height="256">
           Please use a browser that supports canvas.
         </canvas>
         <script type="text/javascript">
@@ -30,14 +34,15 @@
         <script type="text/javascript">
           let canvas = document.getElementById('screen-canvas');
           if (canvas.getContext) {
-            game();
+            init();
           }
 
-          function game() {
+          function init() {
             let width = canvas.width;
             let height = canvas.height;
             let screenDataOffset = 32;
             let ctx = canvas.getContext('2d');
+            let instance;
             let imageData;
             let memory;
             let importObject = {
@@ -50,7 +55,14 @@
               }
             };
             
-            fetchAndInstantiate('game.wasm', importObject).then(function(instance) {
+            fetchAndInstantiate('game.wasm', importObject)
+              .then((inst) => instance = inst)
+              .then(() => game())
+              .catch((err) => {
+                console.log(err);
+              });
+
+            function game() {
               instance.exports.init(width, height);
               memory = instance.exports.memory;
               imageData = new ImageData(new Uint8ClampedArray(memory.buffer, screenDataOffset, width*height*4), width, height)
@@ -60,8 +72,8 @@
                 instance.exports.render(time);
                 ctx.putImageData(imageData, 0, 0);
                 time += 1;
-              }, 33); // ~60fps
-            });
+              }, 16); // ~60fps
+            }
           }
         </script>
     </body>
