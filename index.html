@@ -50,7 +50,7 @@
               }
             };
             
-            fetchAndInstantiate('test.wasm', importObject).then(function(instance) {
+            fetchAndInstantiate('game.wasm', importObject).then(function(instance) {
               instance.exports.init(width, height);
               memory = instance.exports.memory;
               imageData = new ImageData(new Uint8ClampedArray(memory.buffer, screenDataOffset, width*height*4), width, height)
