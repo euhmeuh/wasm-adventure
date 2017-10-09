@@ -1,6 +1,10 @@
 # wasm-adventure
 My adventure into the marvelous world of Web Assembly
 
+## Demo
+
+Try the live version here: https://euhmeuh.github.io/wasm-adventure/
+
 ## How to compile
 
 * Run `wat2wasm game.wast -o game.wasm`
