@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>WebAssembly</title>
+        <style type="text/css">
+          #screen-canvas {
+            border: solid 1px black;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+          }
+        </style>
+    </head>
+    <body>
+        <canvas id="screen-canvas" width="256" height="256">
+          Please use a browser that supports canvas.
+        </canvas>
+        <script type="text/javascript">
+            function fetchAndInstantiate(url, importObject) {
+              return fetch(url).then(response =>
+                response.arrayBuffer()
+              ).then(bytes =>
+                WebAssembly.instantiate(bytes, importObject)
+              ).then(results =>
+                results.instance
+              );
+            }
+        </script>
+        <script type="text/javascript">
+          let canvas = document.getElementById('screen-canvas');
+          if (canvas.getContext) {
+            game();
+          }
+
+          function game() {
+            let width = canvas.width;
+            let height = canvas.height;
+            let screenDataOffset = 32;
+            let ctx = canvas.getContext('2d');
+            let imageData;
+            let memory;
+            let importObject = {
+              console: {
+                log: function(offset, length) {
+                  var bytes = new Uint8Array(memory.buffer, offset, length);
+                  var string = new TextDecoder('utf8').decode(bytes);
+                  console.log(string);
+                }
+              }
+            };
+            
+            fetchAndInstantiate('test.wasm', importObject).then(function(instance) {
+              instance.exports.init(width, height);
+              memory = instance.exports.memory;
+              imageData = new ImageData(new Uint8ClampedArray(memory.buffer, screenDataOffset, width*height*4), width, height)
+
+              setInterval(() => {
+                instance.exports.render();
+                ctx.putImageData(imageData, 0, 0);
+              }, 33);
+            });
+          }
+        </script>
+    </body>
+</html>
