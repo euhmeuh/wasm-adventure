@@ -3,7 +3,7 @@
 
   (memory 1)
 
-  (func $fill_pixels (param $pos i32) (param $len i32) (param $step i32) (param $a i32)
+  (func $fill_pixels (param $pos i32) (param $len i32) (param $step i32) (param $color i32)
     block
       loop
         get_local $pos
@@ -12,7 +12,7 @@
         br_if 1
 
         get_local $pos
-        get_local $a
+        get_local $color
         call $pixel
 
         get_local $pos
@@ -23,7 +23,7 @@
       end
     end)
 
-  (func $fill_row (param $row i32) (param $a i32)
+  (func $fill_row (param $row i32) (param $color i32)
     (local $i i32)
     (local $len i32)
 
@@ -42,10 +42,10 @@
     get_local $i
     get_local $len
     i32.const 1
-    get_local $a
+    get_local $color
     call $fill_pixels)
 
-  (func $fill_col (param $col i32) (param $a i32)
+  (func $fill_col (param $col i32) (param $color i32)
     (local $len i32)
 
     i32.const 0 ;; width offset
@@ -59,10 +59,10 @@
     get_local $len
     i32.const 0 ;; width offset
     i32.load
-    get_local $a
+    get_local $color
     call $fill_pixels)
 
-  (func $fill_screen (param $a i32)
+  (func $fill_screen (param $color i32)
     ;; start
     i32.const 0
 
@@ -74,20 +74,53 @@
     i32.mul
 
     i32.const 1
-    get_local $a
+    get_local $color
     call $fill_pixels)
 
-  (func $pixel (param $pos i32) (param $a i32)
-    ;;; draw a black pixel at the given position in memory
+  (func $pixel (param $pos i32) (param $color i32)
+    ;;; draw a pixel at the given position in memory with the given color
 
-    i32.const 3 ;; alpha byte offset
-    i32.const 32 ;; image memory offset
-    i32.const 4 ;; pixel size
+    (local $cursor i32) ;; write position in memory
+    (local $comp i32) ;; color component to write
+
     get_local $pos
+    i32.const 4 ;; pixel size
     i32.mul
+    i32.const 1024 ;; image memory offset
     i32.add
+    tee_local $cursor
+
+    get_local $color
+    i32.const 3 ;; palette pixel size
+    i32.mul
+    i32.const 8 ;; palette offset
     i32.add
-    get_local $a
+    tee_local $comp
+    i32.load
+    i32.store ;; red component
+
+    get_local $cursor
+    i32.const 1
+    i32.add
+    get_local $comp
+    i32.const 1
+    i32.add
+    i32.load
+    i32.store ;; green component
+
+    get_local $cursor
+    i32.const 2
+    i32.add
+    get_local $comp
+    i32.const 2
+    i32.add
+    i32.load
+    i32.store ;; blue component
+
+    get_local $cursor
+    i32.const 3
+    i32.add
+    i32.const 0xFF ;; alpha component
     i32.store)
 
   (func $init (export "init") (param $width i32) (param $height i32)
@@ -112,26 +145,26 @@
     drop)
 
   (func $hello (export "hello")
-    i32.const 16
+    i32.const 256
     i32.const 12
     call $log)
 
   (func $render (export "render") (param $t i32)
-    i32.const 0x00
-    call $fill_screen
+    ;;i32.const 1
+    ;;call $fill_screen
 
     get_local $t
     i32.const 4 ;; height offset
     i32.load
     i32.rem_u
-    i32.const 0xFF
+    i32.const 0
     call $fill_row
 
     get_local $t
     i32.const 0 ;; width offset
     i32.load
     i32.rem_u
-    i32.const 0xFF
+    i32.const 2
     call $fill_col
 
     get_local $t
@@ -140,7 +173,7 @@
     i32.const 0 ;; width offset
     i32.load
     i32.rem_u
-    i32.const 0xFF
+    i32.const 3
     call $fill_col
 
     get_local $t
@@ -149,14 +182,17 @@
     i32.const 4 ;; height offset
     i32.load
     i32.rem_u
-    i32.const 0xFF
+    i32.const 4
     call $fill_row)
 
   (export "memory" (memory 0))
-  (data (i32.const 16) "Hello world!"))
+  ;;                   black   ]white   ]red     ]green   ]blue    ]
+  (data (i32.const 8) "\00\00\00\FF\FF\FF\FF\00\00\00\FF\00\00\00\FF")
+  (data (i32.const 256) "Hello world!"))
 
 ;; Memory Map
-;; 0-3    screen width
-;; 4-7    screen height
-;; 16-31  debug messages
-;; 32-?   image memory
+;; [0-3]      screen width
+;; [4-7]      screen height
+;; [8-55]     color palette
+;; [256-1023] debug messages
+;; [1024-?]   image memory

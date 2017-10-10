@@ -40,7 +40,7 @@
           function init() {
             let width = canvas.width;
             let height = canvas.height;
-            let screenDataOffset = 32;
+            let screenDataOffset = 1024;
             let ctx = canvas.getContext('2d');
             let instance;
             let imageData;
@@ -66,6 +66,8 @@
               instance.exports.init(width, height);
               memory = instance.exports.memory;
               imageData = new ImageData(new Uint8ClampedArray(memory.buffer, screenDataOffset, width*height*4), width, height)
+
+              instance.exports.hello();
 
               let time = 0;
               setInterval(() => {
