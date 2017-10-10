@@ -136,6 +136,17 @@
     i32.const 0xFF ;; alpha component
     i32.store)
 
+  (func $plot (param $x i32) (param $y i32) (param $color i32)
+    ;;; draw a pixel at the given coordinates
+    get_local $y
+    i32.const 4 ;; @HEIGHT
+    i32.load
+    i32.mul
+    get_local $x
+    i32.add
+    get_local $color
+    call $pixel)
+
 
   ;;; ########################
   ;;; ###    game init     ###
@@ -214,7 +225,12 @@
     i32.load
     i32.rem_u
     i32.const 4
-    call $fill_row)
+    call $fill_row
+
+    i32.const 0
+    i32.const 0
+    i32.const 0
+    call $plot)
 
 
   ;;; ########################
@@ -230,8 +246,13 @@
 
   (export "memory" (memory 0))
 
-  ;;                   black   ]white   ]red     ]green   ]blue    ]
-  (data (i32.const 8) "\00\00\00\FF\FF\FF\FF\00\00\00\FF\00\00\00\FF")
+  ;; PALETTE
+  ;;                    0        1        2        3        4        5        6        7
+  ;;                    black   ]white   ]red     ]green   ]blue    ]        ]        ]        ]
+  (data (i32.const  8) "\00\00\00\FF\FF\FF\FF\00\00\00\FF\00\00\00\FF\00\00\00\00\00\00\00\00\00")
+  ;;                    8        9        10       11       12       13       14       15
+  ;;                            ]        ]        ]        ]        ]        ]        ]        ]
+  (data (i32.const 32) "\00\00\00\FF\FF\FF\FF\00\00\00\FF\00\00\00\FF\00\00\00\00\00\00\00\00\00")
+
+  ;; MESSAGES
   (data (i32.const 256) "Hello world!"))
-
-
