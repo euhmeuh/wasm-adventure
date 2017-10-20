@@ -4,12 +4,12 @@
 
 (func fill_pixels (pos len step color)
   (for pos (- len 1) step
-    (call 'pixel pos color)))
+    (call pixel pos color)))
 
-(func main
-  (call 'log (mem 'messages) 12))
+(func main ()
+  (call log (mem 'messages) 12))
 
-(export "memory" '(memory 0))
+(export "memory" (memory 0))
 
 (data
   ('width 0 0)
