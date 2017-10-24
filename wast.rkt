@@ -1,6 +1,6 @@
 #lang racket
 
-(require racket/syntax
+(require
   (for-syntax racket)
   (for-syntax racket/syntax))
 
@@ -11,9 +11,6 @@
          func call
          data mem
          for)
-
-(define ($ name)
-  (format-symbol "$~a" name))
 
 (define-for-syntax ($ name)
   (format-symbol "$~a" name))
@@ -32,9 +29,16 @@
     ((_ name object)
      `(export ,(format "~s" name) object))))
 
-(define-syntax-rule (func name (arg ...) body ...)
-  `(func ,($ 'name)
-           (param ,($ 'arg) i32) ... ,body ...))
+(define-syntax (func stx)
+  (define (eval-args args)
+    (map (lambda (a) `'(param ,($ a) i32))
+         (syntax->list args)))
+
+  (syntax-case stx ()
+    ((_ name (arg ...) body ...)
+     #``(func #,($ #'name)
+              ,@(list #,@(eval-args #'(arg ...)))
+              ,body ...))))
 
 (define-syntax (call stx)
   (define (eval-args args)
