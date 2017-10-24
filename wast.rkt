@@ -19,15 +19,11 @@
   (#%module-begin
     (display `(module ,expr ...))))
 
-(define-syntax import
-  (syntax-rules ()
-    ((_ path ... (name arg ...))
-     `(import ,(format "~s" path) ... ,(func name (arg ...))))))
+(define-syntax-rule (import path ... (name arg ...))
+  `(import ,(format "~s" path) ... ,(func name (arg ...))))
 
-(define-syntax export
-  (syntax-rules ()
-    ((_ name object)
-     `(export ,(format "~s" name) object))))
+(define-syntax-rule (export name object)
+  `(export ,(format "~s" name) object))
 
 (define-syntax (func stx)
   (define (eval-args args)
