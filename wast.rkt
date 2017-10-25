@@ -9,21 +9,23 @@
          (rename-out (module-begin #%module-begin))
          import export
          func call
-         data mem
+         data mem data-section
          for)
+
+(define (str v) (format "~s" v))
 
 (define-for-syntax ($ name)
   (format-symbol "$~a" name))
 
 (define-syntax-rule (module-begin expr ...)
   (#%module-begin
-    (display `(module ,expr ...))))
+    (display `(module ,expr ... ,@(data-section)))))
 
 (define-syntax-rule (import path ... (name arg ...))
-  `(import ,(format "~s" path) ... ,(func name (arg ...))))
+  `(import ,(str path) ... ,(func name (arg ...))))
 
 (define-syntax-rule (export name object)
-  `(export ,(format "~s" name) object))
+  `(export ,(str name) object))
 
 (define-syntax (func stx)
   (define (eval-args args)
@@ -51,11 +53,23 @@
 (define memory '())
 
 (define (data . entries)
-  (set! memory entries))
+  (set! memory entries)
+  "")
 
 (define (mem index)
-  15)
-  ;;(second (assq index memory)))
+  (second (assq index memory)))
+
+(define (data-section)
+  (define (eval-value v)
+    (cond
+      ((string? v) (str v))
+      (else v)))
+
+  (map (lambda (entry)
+         (let ((offset (second entry))
+               (value (third entry)))
+           `(data (i32.const ,offset) ,(eval-value value))))
+    memory))
 
 (define-syntax for
   (syntax-rules () ((_ args ...) `(for ,args ...))))
