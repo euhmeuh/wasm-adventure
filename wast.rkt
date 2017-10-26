@@ -1,8 +1,7 @@
 #lang racket
 
 (require
-  (for-syntax racket)
-  (for-syntax racket/syntax))
+  racket/syntax)
 
 (provide (except-out (all-from-out racket)
                      #%module-begin)
@@ -14,45 +13,53 @@
          data
          mem
          data-section
-         for)
-
-(define (str v) (format "\"~a\"" v))
-
-(define-for-syntax ($ name)
-  (format-symbol "$~a" name))
+         for
+         +
+         -)
 
 (define-syntax-rule (module-begin expr ...)
   (#%module-begin
     (display `(module ,expr ... ,@(data-section)))))
 
+(define (str value)
+  (format "\"~a\"" value))
+
+(define ($ name)
+  (format-symbol "$~a" name))
+
+(define (var x)
+  (cond
+    ((symbol? x) `(get_local ,($ x)))
+    ((number? x) `(i32.const ,x))
+    (else x)))
+
 (define-syntax-rule (import path ... (name arg ...))
-  `(import ,(str path) ... ,(func name (arg ...))))
+  (import-impl '(path ...) 'name '(arg ...)))
+
+(define (import-impl paths name args)
+  `(import ,@(map str paths) ,(func-impl name args)))
 
 (define-syntax-rule (export name object)
+  (export-impl 'name 'object))
+
+(define (export-impl name object)
   `(export ,(str name) object))
 
-(define-syntax (func stx)
-  (define (eval-args args)
-    (map (lambda (a) `'(param ,($ a) i32))
-         (syntax->list args)))
+(define-syntax-rule (func name (arg ...) body ...)
+  (func-impl 'name '(arg ...) body ...))
 
-  (syntax-case stx ()
-    ((_ name (arg ...) body ...)
-     #``(func #,($ #'name)
-              ,@(list #,@(eval-args #'(arg ...)))
-              ,body ...))))
+(define (func-impl name args . body)
+  (define (eval-arg arg)
+    `(param ,($ arg) i32))
+  `(func ,($ name)
+         ,@(map eval-arg args)
+         ,@body))
 
-(define-syntax (call stx)
-  (define (eval-args args)
-    (map (lambda (a)
-           (if (identifier? a)
-             `'(get_local ,($ a)) ;; quote
-             a)) ;; don't quote
-         (syntax->list args)))
+(define-syntax-rule (call name arg ...)
+  (call-impl 'name '(arg ...)))
 
-  (syntax-case stx ()
-    ((_ name . args)
-     #``(call #,($ #'name) ,@(list #,@(eval-args #'args))))))
+(define (call-impl name args)
+  `(call ,($ name) ,@(map var args)))
 
 (define memory '())
 
@@ -61,7 +68,7 @@
   "")
 
 (define (mem index)
-  (second (assq index memory)))
+  `(i32.const ,(second (assq index memory))))
 
 (define (flatten data)
   (cond
@@ -89,5 +96,21 @@
            `(data (i32.const ,offset) ,(eval-value value))))
        memory))
 
-(define-syntax for
-  (syntax-rules () ((_ args ...) `(for ,args ...))))
+(define (+ x y)
+  `(i32.add ,(var x) ,(var y)))
+
+(define (- x y)
+  `(i32.sub ,(var x) ,(var y)))
+
+(define-syntax-rule (for counter limit step body ...)
+  (for-impl 'counter 'limit 'step body ...))
+
+(define (for-impl counter limit step . body)
+   `(loop $done $loop
+      (if (i32.ge_u ,(var counter) ,(var limit))
+        (br $done)
+        (block
+          ,@body
+          (set_local ,(var counter)
+            ,(+ counter step))))
+      (br $loop)))

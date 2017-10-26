@@ -25,7 +25,7 @@
   '(screen 1024 0))
 
 (func fill_pixels (pos len step color)
-  (for 'pos '(- len 1) 'step
+  (for pos (- len 1) step
     (call pixel pos color)))
 
 (func main ()
