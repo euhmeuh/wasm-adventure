@@ -7,12 +7,16 @@
 (provide (except-out (all-from-out racket)
                      #%module-begin)
          (rename-out (module-begin #%module-begin))
-         import export
-         func call
-         data mem data-section
+         import
+         export
+         func
+         call
+         data
+         mem
+         data-section
          for)
 
-(define (str v) (format "~s" v))
+(define (str v) (format "\"~a\"" v))
 
 (define-for-syntax ($ name)
   (format-symbol "$~a" name))
@@ -59,17 +63,31 @@
 (define (mem index)
   (second (assq index memory)))
 
+(define (flatten data)
+  (cond
+    ((or (null? data) (symbol? data)) '())
+    ((pair? data) (append (flatten (car data)) (flatten (cdr data))))
+    (else (list data))))
+
+(define (list->memstring list)
+  (string-append* (map (lambda (x)
+                         (string-append "\\"
+                           (~r x #:min-width 6
+                                 #:pad-string "0"
+                                 #:base 16)))
+                       list)))
+
 (define (data-section)
   (define (eval-value v)
-    (cond
-      ((string? v) (str v))
-      (else v)))
+    (if (string? v)
+      (str v)
+      (str (list->memstring (flatten v)))))
 
   (map (lambda (entry)
          (let ((offset (second entry))
                (value (third entry)))
            `(data (i32.const ,offset) ,(eval-value value))))
-    memory))
+       memory))
 
 (define-syntax for
   (syntax-rules () ((_ args ...) `(for ,args ...))))
