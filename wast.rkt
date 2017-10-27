@@ -15,7 +15,11 @@
          data-section
          for
          +
-         -)
+         -
+         *
+         let-local
+         set-local
+         load)
 
 (define-syntax-rule (module-begin expr ...)
   (#%module-begin
@@ -105,6 +109,9 @@
 (define (- x y)
   `(i32.sub ,(var x) ,(var y)))
 
+(define (* x y)
+  `(i32.mul ,(var x) ,(var y)))
+
 (define (for counter limit step . body)
   `(loop $loop
      (block $done
@@ -113,3 +120,14 @@
        (set_local ,($ counter)
          ,(+ counter step))
        (br $loop))))
+
+(define-syntax-rule (let-local (v ...) body ...)
+  (let ((v 'v)...)
+    `((local ,($ v) i32) ...
+      ,body ...)))
+
+(define (set-local x y)
+  `(set_local ,($ x) ,y))
+
+(define (load index)
+  `(i32.load ,(mem index)))
