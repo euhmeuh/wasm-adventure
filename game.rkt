@@ -2,6 +2,8 @@
 
 (import "console" "log" (log pos len))
 
+'(memory 1)
+
 (data
   '(width 0 0)
   '(height 4 0)
@@ -24,11 +26,16 @@
   '(messages 256 "Hello world!")
   '(screen 1024 0))
 
+(func pixel (pos color)
+  (- pos color)
+  '(drop))
+
 (func fill_pixels (pos len step color)
   (for pos (- len 1) step
-    (call pixel pos color)))
+    (call 'pixel pos color)))
 
 (func main ()
-  (call log (mem 'messages) 12))
+  (call 'log (mem 'messages) 12))
 
 (export "memory" (memory 0))
+(export "main" (func $main))

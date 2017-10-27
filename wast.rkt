@@ -37,16 +37,17 @@
   (import-impl '(path ...) 'name '(arg ...)))
 
 (define (import-impl paths name args)
-  `(import ,@(map str paths) ,(func-impl name args)))
+  `(import ,@(map str paths) ,(func-signature name args)))
 
 (define-syntax-rule (export name object)
   (export-impl 'name 'object))
 
 (define (export-impl name object)
-  `(export ,(str name) object))
+  `(export ,(str name) ,object))
 
 (define-syntax-rule (func name (arg ...) body ...)
-  (func-impl 'name '(arg ...) body ...))
+  (let ((arg 'arg) ...)
+    (func-impl 'name '(arg ...) body ...)))
 
 (define (func-impl name args . body)
   (define (eval-arg arg)
@@ -55,10 +56,12 @@
          ,@(map eval-arg args)
          ,@body))
 
-(define-syntax-rule (call name arg ...)
-  (call-impl 'name '(arg ...)))
+(define (func-signature name args)
+  (define (eval-arg arg) `(param i32))
+  `(func ,($ name)
+         ,@(map eval-arg args)))
 
-(define (call-impl name args)
+(define (call name . args)
   `(call ,($ name) ,@(map var args)))
 
 (define memory '())
@@ -102,15 +105,11 @@
 (define (- x y)
   `(i32.sub ,(var x) ,(var y)))
 
-(define-syntax-rule (for counter limit step body ...)
-  (for-impl 'counter 'limit 'step body ...))
-
-(define (for-impl counter limit step . body)
-   `(loop $done $loop
-      (if (i32.ge_u ,(var counter) ,(var limit))
-        (br $done)
-        (block
-          ,@body
-          (set_local ,(var counter)
-            ,(+ counter step))))
-      (br $loop)))
+(define (for counter limit step . body)
+  `(loop $loop
+     (block $done
+       (br_if $done (i32.ge_u ,(var counter) ,(var limit)))
+       ,@body
+       (set_local ,($ counter)
+         ,(+ counter step))
+       (br $loop))))
