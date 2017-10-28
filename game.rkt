@@ -7,22 +7,23 @@
 (data
   '(width 0 0)
   '(height 4 0)
-  '(palette 8 ((black #x000000)
-               (white #xFFFFFF)
-               (red #xFF0000)
-               (green #x00FF00)
-               (blue #x0000FF)
-               (maroon #x000000)
-               (beige #x000000)
-               (orange #x000000)
-               (cyan #x000000)
-               (purple #x000000)
-               (pink #x000000)
-               (yellow #x000000)
-               (grey #x000000)
-               (dark-grey #x000000)
-               (dark-green #x000000)
-               (dark-red #x000000)))
+  `(palette 8 ,(memstring 3
+    '(black #x000000)
+    '(white #xFFFFFF)
+    '(red #xFF0000)
+    '(green #x00FF00)
+    '(blue #x0000FF)
+    '(maroon #x000000)
+    '(beige #x000000)
+    '(orange #x000000)
+    '(cyan #x000000)
+    '(purple #x000000)
+    '(pink #x000000)
+    '(yellow #x000000)
+    '(grey #x000000)
+    '(dark-grey #x000000)
+    '(dark-green #x000000)
+    '(dark-red #x000000)))
   '(messages 256 "Hello world!")
   '(screen 1024 0))
 
@@ -33,166 +34,62 @@
 (func fill_row (row color)
   ;;; fill a full row of the screen with the given color
   (let-local (i len)
-    (set-local i (* (load 'width) row))
-    (set-local len (+ (load 'width) i))
+    (set-local i (* (load (mem 'width)) row))
+    (set-local len (+ (load (mem 'width)) i))
     (call 'fill_pixels i len 1 color)))
 
-'(func $fill_col (param $col i32) (param $color i32)
+(func fill_col (col color)
   ;;; fill a full column of the screen with the given color
-  (local $len i32)
+  (let-local (len)
+    (set-local len (* (load (mem 'width)) (load (mem 'height))))
+    (call 'fill_pixels col len (load (mem 'width)) color)))
 
-  i32.const 0 ;; @WIDTH
-  i32.load
-  i32.const 4 ;; @HEIGHT
-  i32.load
-  i32.mul
-  set_local $len
-
-  get_local $col
-  get_local $len
-  i32.const 0 ;; @WIDTH
-  i32.load
-  get_local $color
-  call $fill_pixels)
-
-'(func $fill_screen (param $color i32)
+(func fill_screen (color)
   ;;; fill the whole screen with a color
+  (call 'fill_pixels 0 (* (load (mem 'width)) (load (mem 'height))) 1 color))
 
-  ;; start
-  i32.const 0
-
-  ;; end
-  i32.const 0 ;; @WIDTH
-  i32.load
-  i32.const 4 ;; @HEIGHT
-  i32.load
-  i32.mul
-
-  i32.const 1
-  get_local $color
-  call $fill_pixels)
-
-'(func $pixel (param $pos i32) (param $color i32)
+(func pixel (pos color)
   ;;; draw a pixel at the given position in memory with the given color
+  (let-local (cursor ;; write position in memory
+              comp)  ;; color component to write
+    (set-local cursor (+ (mem 'screen) (* pos 4))) ;; 4 is pixel size
+    (set-local comp (+ (mem 'palette) (* color 3))) ;; 3 is palette color size
+    ;; red component
+    (store cursor (load comp))
+    ;; green component
+    (store (+ cursor 1) (load (+ comp 1)))
+    ;; blue component
+    (store (+ cursor 2) (load (+ comp 2)))
+    ;; alpha
+    (store (+ cursor 3) #xFF)))
 
-  (local $cursor i32) ;; write position in memory
-  (local $comp i32) ;; color component to write
-
-  get_local $pos
-  i32.const 4 ;; pixel size
-  i32.mul
-  i32.const 1024 ;; @IMAGE
-  i32.add
-  tee_local $cursor
-
-  get_local $color
-  i32.const 3 ;; palette pixel size
-  i32.mul
-  i32.const 8 ;; @PALETTE
-  i32.add
-  tee_local $comp
-  i32.load
-  i32.store ;; red component
-
-  get_local $cursor
-  i32.const 1
-  i32.add
-  get_local $comp
-  i32.const 1
-  i32.add
-  i32.load
-  i32.store ;; green component
-
-  get_local $cursor
-  i32.const 2
-  i32.add
-  get_local $comp
-  i32.const 2
-  i32.add
-  i32.load
-  i32.store ;; blue component
-
-  get_local $cursor
-  i32.const 3
-  i32.add
-  i32.const 0xFF ;; alpha component
-  i32.store)
-
-'(func $plot (param $x i32) (param $y i32) (param $color i32)
+(func plot (x y color)
   ;;; draw a pixel at the given coordinates
-  get_local $y
-  i32.const 4 ;; @HEIGHT
-  i32.load
-  i32.mul
-  get_local $x
-  i32.add
-  get_local $color
-  call $pixel)
+  (call 'pixel (+ x (* y (load (mem 'height)))) color))
 
-'(func $init (param $width i32) (param $height i32)
+(func init (width height)
   ;;; grow memory given the dimensions of the screen
-
-  i32.const 0 ;; @WIDTH
-  get_local $width
-  i32.store
-
-  i32.const 4 ;; @HEIGHT
-  get_local $height
-  i32.store
-
-  get_local $width
-  get_local $height
-  i32.mul
-  i32.const 4 ;; pixel size
-  i32.mul
-  i32.const 0x10000 ;; memory page size
-  i32.div_u
-  grow_memory
-  drop)
+  (store (mem 'width) width)
+  (store (mem 'height) height)
+  `(grow_memory ,(/ (* 4 (* width height)) #x10000)) ;; 0x10000 is memory page size
+  '(drop))
 
 (func hello ()
   (call 'log (mem 'messages) 12))
 
-'(func $render (param $t i32)
-  i32.const 1
-  call $fill_screen
+(func render (t)
+  (call 'fill_screen 1)
 
-  get_local $t
-  i32.const 4 ;; @HEIGHT
-  i32.load
-  i32.rem_u
-  i32.const 0
-  call $fill_row
-
-  get_local $t
-  i32.const 0 ;; @WIDTH
-  i32.load
-  i32.rem_u
-  i32.const 2
-  call $fill_col
-
-  get_local $t
-  i32.const 2
-  i32.mul
-  i32.const 0 ;; @WIDTH
-  i32.load
-  i32.rem_u
-  i32.const 3
-  call $fill_col
-
-  get_local $t
-  i32.const 3
-  i32.mul
-  i32.const 4 ;; @HEIGHT
-  i32.load
-  i32.rem_u
-  i32.const 4
-  call $fill_row
-
-  i32.const 0
-  i32.const 0
-  i32.const 0
-  call $plot)
+  ;; black horizontal line
+  (call 'fill_row (% t (load (mem 'height))) 0)
+  ;; red vertical line
+  (call 'fill_col (% t (load (mem 'width))) 2)
+  ;; green vertical line
+  (call 'fill_col (% (* 2 t) (load (mem 'width))) 3)
+  ;; blue horizontal line
+  (call 'fill_row (% (* 3 t) (load (mem 'height))) 4)
+  ;; top left black dot
+  (call 'plot 0 0 0))
 
 (export "memory" (memory 0))
 (export "init" (func $init))
