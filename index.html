@@ -1,83 +1,106 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8">
-        <title>WebAssembly</title>
-        <style type="text/css">
-          #screen-canvas {
-            border: solid 1px black;
-            display: block;
-          }
-          .centered {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-          }
-        </style>
-    </head>
-    <body>
-        <canvas id="screen-canvas" class="centered" width="256" height="256">
-          Please use a browser that supports canvas.
-        </canvas>
-        <script src="fpsctrl.js"></script>
-        <script type="text/javascript">
-            function fetchAndInstantiate(url, importObject) {
-              return fetch(url).then(response =>
-                response.arrayBuffer()
-              ).then(bytes =>
-                WebAssembly.instantiate(bytes, importObject)
-              ).then(results =>
-                results.instance
-              );
+  <head>
+    <meta charset="utf-8">
+    <title>WebAssembly</title>
+    <style type="text/css">
+      body {
+        background-color: #00424e;
+      }
+      a {
+        color: white;
+      }
+      #console {
+        background-image: url("dmg.svg");
+        background-position: center;
+        background-repeat: no-repeat;
+        width: 500px;
+        height: 820px;
+      }
+      #screen-canvas {
+        display: block;
+        position: relative;
+        top: 130px;
+        left: 140px;
+      }
+      .screen-centered {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      .center {
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="console" class="screen-centered">
+      <canvas id="screen-canvas" width="220" height="220">
+        Please use a browser that supports canvas.
+      </canvas>
+    </div>
+    <div class="center">
+      <a href="https://github.com/euhmeuh/wasm-adventure">Github project</a>
+    </div>
+    <script src="fpsctrl.js"></script>
+    <script type="text/javascript">
+      function fetchAndInstantiate(url, importObject) {
+        return fetch(url).then(response =>
+          response.arrayBuffer()
+        ).then(bytes =>
+          WebAssembly.instantiate(bytes, importObject)
+        ).then(results =>
+          results.instance
+        );
+      }
+    </script>
+    <script type="text/javascript">
+      let canvas = document.getElementById('screen-canvas');
+      if (canvas.getContext) {
+        init();
+      }
+
+      function init() {
+        let width = canvas.width;
+        let height = canvas.height;
+        let screenDataOffset = 2048;
+        let ctx = canvas.getContext('2d');
+        let instance;
+        let imageData;
+        let memory;
+        let importObject = {
+          console: {
+            log: function(offset, length) {
+              var bytes = new Uint8Array(memory.buffer, offset, length);
+              var string = new TextDecoder('utf8').decode(bytes);
+              console.log(string);
             }
-        </script>
-        <script type="text/javascript">
-          let canvas = document.getElementById('screen-canvas');
-          if (canvas.getContext) {
-            init();
           }
+        };
 
-          function init() {
-            let width = canvas.width;
-            let height = canvas.height;
-            let screenDataOffset = 2048;
-            let ctx = canvas.getContext('2d');
-            let instance;
-            let imageData;
-            let memory;
-            let importObject = {
-              console: {
-                log: function(offset, length) {
-                  var bytes = new Uint8Array(memory.buffer, offset, length);
-                  var string = new TextDecoder('utf8').decode(bytes);
-                  console.log(string);
-                }
-              }
-            };
-            
-            fetchAndInstantiate('game.wasm', importObject)
-              .then((inst) => instance = inst)
-              .then(() => game())
-              .catch((err) => {
-                console.log(err);
-              });
+        fetchAndInstantiate('game.wasm', importObject)
+          .then((inst) => instance = inst)
+          .then(() => game())
+          .catch((err) => {
+            console.log(err);
+          });
 
-            function game() {
-              instance.exports.init(width, height);
-              memory = instance.exports.memory;
-              imageData = new ImageData(new Uint8ClampedArray(memory.buffer, screenDataOffset, width*height*4), width, height)
+        function game() {
+          instance.exports.init(width, height);
+          memory = instance.exports.memory;
+          imageData = new ImageData(new Uint8ClampedArray(memory.buffer, screenDataOffset, width*height*4), width, height)
 
-              instance.exports.hello();
+          instance.exports.hello();
 
-              let fc = new FpsCtrl(30, (e) => {
-                instance.exports.render(e.frame);
-                ctx.putImageData(imageData, 0, 0);
-              });
+          let fc = new FpsCtrl(30, (e) => {
+            instance.exports.render(e.frame);
+            ctx.putImageData(imageData, 0, 0);
+          });
 
-              fc.start();
-            }
-          }
-        </script>
-    </body>
+          fc.start();
+        }
+      }
+    </script>
+  </body>
 </html>
