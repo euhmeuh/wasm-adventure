@@ -22,7 +22,9 @@
          (rename-out (rem %))
          set-local
          load
-         store)
+         load-byte
+         store
+         store-byte)
 
 (define-syntax-rule (module-begin expr ...)
   (#%module-begin
@@ -169,5 +171,11 @@
 (define (load index)
   `(i32.load ,(var index)))
 
+(define (load-byte index)
+  `(i32.load8_u ,(var index)))
+
 (define (store index value)
   `(i32.store ,(var index) ,(var value)))
+
+(define (store-byte index value)
+  `(i32.store8 ,(var index) ,(var value)))

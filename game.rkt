@@ -28,7 +28,7 @@
   '(screen 1024 0))
 
 (func fill_pixels (pos len step color)
-  (for pos (- len 1) step
+  (for pos len step
     (call 'pixel pos color)))
 
 (func fill_row (row color)
@@ -55,13 +55,13 @@
   (set-local cursor (+ (mem 'screen) (* pos 4))) ;; 4 is pixel size
   (set-local comp (+ (mem 'palette) (* color 3))) ;; 3 is palette color size
   ;; red component
-  (store cursor (load comp))
+  (store-byte cursor (load-byte comp))
   ;; green component
-  (store (+ cursor 1) (load (+ comp 1)))
+  (store-byte (+ cursor 1) (load-byte (+ comp 1)))
   ;; blue component
-  (store (+ cursor 2) (load (+ comp 2)))
+  (store-byte (+ cursor 2) (load-byte (+ comp 2)))
   ;; alpha
-  (store (+ cursor 3) #xFF))
+  (store-byte (+ cursor 3) #xFF))
 
 (func plot (x y color)
   ;;; draw a pixel at the given coordinates
