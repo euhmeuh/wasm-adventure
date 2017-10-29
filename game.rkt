@@ -25,7 +25,17 @@
     '(dark-green #x000000)
     '(dark-red #x000000)))
   '(messages 256 "Hello world!")
-  '(screen 1024 0))
+  `(sprites 1024 ,(memstring 1
+    '(invader 11 8
+              0 0 1 0 0 0 0 0 1 0 0
+              0 0 0 1 0 0 0 1 0 0 0
+              0 0 1 1 1 1 1 1 1 0 0
+              0 1 1 0 1 1 1 0 1 1 0
+              1 1 1 1 1 1 1 1 1 1 1
+              1 0 1 1 1 1 1 1 1 0 1
+              1 0 1 0 0 0 0 0 1 0 1
+              0 0 0 1 1 0 1 1 0 0 0)))
+  '(screen 2048 0))
 
 (func fill_pixels (pos len step color)
   (for pos len step
@@ -67,6 +77,14 @@
   ;;; draw a pixel at the given coordinates
   (call 'pixel (+ x (* y (load (mem 'height)))) color))
 
+(func sprite (x y index)
+  (locals width height color i)
+  (set-local width (load-byte (mem 'sprites)))
+  (set-local height (load-byte (+ 1 (mem 'sprites))))
+  (set-local color (+ 2 (mem 'sprites)))
+  (for i (* width height) 1
+    (call 'plot (+ x (% i width)) (+ y (/ i width)) (load-byte (+ i color)))))
+
 (func init (width height)
   ;;; grow memory given the dimensions of the screen
   (store (mem 'width) width)
@@ -78,18 +96,23 @@
   (call 'log (mem 'messages) 12))
 
 (func render (t)
-  (call 'fill_screen 1)
+  (locals width height)
+  (set-local width (load (mem 'width)))
+  (set-local height (load (mem 'height)))
 
-  ;; black horizontal line
-  (call 'fill_row (% t (load (mem 'height))) 0)
+  (call 'fill_screen 0)
+
+  ;; white horizontal line
+  (call 'fill_row (% t (load (mem 'height))) 1)
   ;; red vertical line
-  (call 'fill_col (% t (load (mem 'width))) 2)
+  (call 'fill_col (% (* 3 t) width) 2)
   ;; green vertical line
-  (call 'fill_col (% (* 2 t) (load (mem 'width))) 3)
+  (call 'fill_col (% t width) 3)
   ;; blue horizontal line
-  (call 'fill_row (% (* 3 t) (load (mem 'height))) 4)
-  ;; top left black dot
-  (call 'plot 0 0 0))
+  (call 'fill_row (% (* 3 t) height) 4)
+
+  ;; space invader!!
+  (call 'sprite (% (* 2 t) width) (/ height 2) 0))
 
 (export "memory" (memory 0))
 (export "init" (func $init))
