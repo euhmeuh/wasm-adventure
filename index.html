@@ -20,6 +20,7 @@
         <canvas id="screen-canvas" class="centered" width="256" height="256">
           Please use a browser that supports canvas.
         </canvas>
+        <script src="fpsctrl.js"></script>
         <script type="text/javascript">
             function fetchAndInstantiate(url, importObject) {
               return fetch(url).then(response =>
@@ -69,12 +70,12 @@
 
               instance.exports.hello();
 
-              let time = 0;
-              setInterval(() => {
-                instance.exports.render(time);
+              let fc = new FpsCtrl(30, (e) => {
+                instance.exports.render(e.frame);
                 ctx.putImageData(imageData, 0, 0);
-                time += 1;
-              }, 16); // ~60fps
+              });
+
+              fc.start();
             }
           }
         </script>
