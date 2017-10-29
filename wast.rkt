@@ -20,7 +20,6 @@
          (rename-out (mul *))
          (rename-out (div /))
          (rename-out (rem %))
-         let-local
          set-local
          load
          store)
@@ -53,15 +52,24 @@
 (define (export-impl name object)
   `(export ,(str name) ,object))
 
-(define-syntax-rule (func name (arg ...) body ...)
-  (let ((arg 'arg) ...)
-    (func-impl 'name '(arg ...) body ...)))
+(define-syntax func
+  (syntax-rules (locals)
+    ((_ name (arg ...) (locals loc ...) body ...)
+     (let ((arg 'arg) ... (loc 'loc) ...)
+       (func-impl 'name '(arg ...) '(loc ...) body ...)))
 
-(define (func-impl name args . body)
+    ((_ name (arg ...) body ...)
+     (let ((arg 'arg) ...)
+       (func-impl 'name '(arg ...) '() body ...)))))
+
+(define (func-impl name args locals . body)
   (define (eval-arg arg)
     `(param ,($ arg) i32))
+  (define (eval-loc loc)
+    `(local ,($ loc) i32))
   `(func ,($ name)
          ,@(map eval-arg args)
+         ,@(map eval-loc locals)
          ,@body))
 
 (define (func-signature name args)
@@ -154,11 +162,6 @@
        (set_local ,($ counter)
          ,(add counter step))
        (br $loop))))
-
-(define-syntax-rule (let-local (v ...) body ...)
-  (let ((v 'v)...)
-    `((local ,($ v) i32) ...
-      ,body ...)))
 
 (define (set-local x y)
   `(set_local ,($ x) ,y))

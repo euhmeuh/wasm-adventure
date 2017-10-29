@@ -33,16 +33,16 @@
 
 (func fill_row (row color)
   ;;; fill a full row of the screen with the given color
-  (let-local (i len)
-    (set-local i (* (load (mem 'width)) row))
-    (set-local len (+ (load (mem 'width)) i))
-    (call 'fill_pixels i len 1 color)))
+  (locals i len)
+  (set-local i (* (load (mem 'width)) row))
+  (set-local len (+ (load (mem 'width)) i))
+  (call 'fill_pixels i len 1 color))
 
 (func fill_col (col color)
   ;;; fill a full column of the screen with the given color
-  (let-local (len)
-    (set-local len (* (load (mem 'width)) (load (mem 'height))))
-    (call 'fill_pixels col len (load (mem 'width)) color)))
+  (locals len)
+  (set-local len (* (load (mem 'width)) (load (mem 'height))))
+  (call 'fill_pixels col len (load (mem 'width)) color))
 
 (func fill_screen (color)
   ;;; fill the whole screen with a color
@@ -50,18 +50,18 @@
 
 (func pixel (pos color)
   ;;; draw a pixel at the given position in memory with the given color
-  (let-local (cursor ;; write position in memory
-              comp)  ;; color component to write
-    (set-local cursor (+ (mem 'screen) (* pos 4))) ;; 4 is pixel size
-    (set-local comp (+ (mem 'palette) (* color 3))) ;; 3 is palette color size
-    ;; red component
-    (store cursor (load comp))
-    ;; green component
-    (store (+ cursor 1) (load (+ comp 1)))
-    ;; blue component
-    (store (+ cursor 2) (load (+ comp 2)))
-    ;; alpha
-    (store (+ cursor 3) #xFF)))
+  (locals cursor ;; write position in memory
+          comp) ;; color component to write
+  (set-local cursor (+ (mem 'screen) (* pos 4))) ;; 4 is pixel size
+  (set-local comp (+ (mem 'palette) (* color 3))) ;; 3 is palette color size
+  ;; red component
+  (store cursor (load comp))
+  ;; green component
+  (store (+ cursor 1) (load (+ comp 1)))
+  ;; blue component
+  (store (+ cursor 2) (load (+ comp 2)))
+  ;; alpha
+  (store (+ cursor 3) #xFF))
 
 (func plot (x y color)
   ;;; draw a pixel at the given coordinates
