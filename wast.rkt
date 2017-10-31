@@ -1,6 +1,8 @@
 #lang racket
 
-(require racket/syntax)
+(require
+  "memory.rkt"
+  racket/syntax)
 
 (provide (except-out (all-from-out racket)
                      #%module-begin
@@ -12,7 +14,6 @@
          call
          data
          mem
-         memstring
          data-section
          for
          (rename-out (add +))
@@ -81,83 +82,6 @@
 
 (define (call name . args)
   `(call ,($ name) ,@(map var args)))
-
-(define memory (make-hash))
-
-(define (make-entry data)
-  (lambda (m)
-    (match m
-      (('name) (car data))
-      (('offset) (cadr data))
-      (('value) (caddr data)))))
-
-(define (make-memstring data)
-  )
-
-(define (data . entries)
-  (for-each
-    (lambda (e)
-      (let ((entry (make-entry e)))
-        (hash-set! memory (entry 'name) (entry 'offset))
-        (when (memstring? (entry 'value))
-          (for-each
-            (lambda (m) (hash-set! memory (m 'name) (m 'offset)))
-            ((entry 'value) 'offsets (entry 'offset))))))
-    entries)
-  "")
-
-(define (mem index)
-  `(i32.const ,(second (assq index memory))))
-
-(define (flatten data)
-  (cond
-    ((or (null? data) (symbol? data)) '())
-    ((pair? data) (append (flatten (car data)) (flatten (cdr data))))
-    (else (list data))))
-
-(define (cut l n)
-   (if (not (empty? l))
-       (cons (take l n) (cut (drop l n) n))
-       '()))
-
-;; transform a list of values into a string representing bytes
-;; entries - a list or tree of values (symbols are discarded)
-;; size - size (in bytes) of every entry
-;;
-;; Examples:
-;; (memstring 1 '(1 2 3))
-;; "\01\02\03"
-;;
-;; (memstring 4 '(#xDEADBEEF #x11223344 255)
-;; "\DE\AD\BE\EF\11\22\33\44\00\00\00\FF"
-;;
-;; (memstring 2 '((apple 1) (orange 2) (lemon 3)))
-;; "\00\01\00\02\00\03"
-(define (format-memstring size . entries)
-  (define (parse x)
-    (list->string
-      (flatten
-        (cons #\\ (add-between
-          (cut
-            (string->list
-              (~r x #:min-width (* size 2)
-                    #:pad-string "0"
-                    #:base 16))
-            2) #\\)))))
-
-  (string-append* (map parse (flatten entries))))
-
-(define (data-section)
-  (define (eval-value v)
-    (if (number? v)
-        (str (memstring 1 v))
-        (str v)))
-
-  (map (lambda (entry)
-         (let ((offset (second entry))
-               (value (third entry)))
-           `(data (i32.const ,offset) ,(eval-value value))))
-       memory))
 
 (define (add x y)
   `(i32.add ,(var x) ,(var y)))

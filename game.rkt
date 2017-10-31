@@ -8,25 +8,25 @@
   '(width 0 0)
   '(height 4 0)
   '(palette 8 (memstring 3
-    (black #x000000)
-    (white #xFFFFFF)
-    (red #xFF0000)
-    (green #x00FF00)
-    (blue #x0000FF)
-    (maroon #x000000)
-    (beige #x000000)
-    (orange #x000000)
-    (cyan #x000000)
-    (purple #x000000)
-    (pink #x000000)
-    (yellow #x000000)
-    (grey #x000000)
-    (dark-grey #x000000)
-    (dark-green #x000000)
-    (dark-red #x000000)))
+     black      #x000000
+     white      #xFFFFFF
+     red        #xFF0000
+     green      #x00FF00
+     blue       #x0000FF
+     maroon     #x000000
+     beige      #x000000
+     orange     #x000000
+     cyan       #x000000
+     purple     #x000000
+     pink       #x000000
+     yellow     #x000000
+     grey       #x000000
+     dark-grey  #x000000
+     dark-green #x000000
+     dark-red   #x000000))
   '(messages 256 "Hello world!")
   '(sprites 1024 (memstring 1
-    (invader 11 8
+     invader 11 8
              0 0 1 0 0 0 0 0 1 0 0
              0 0 0 1 0 0 0 1 0 0 0
              0 0 1 1 1 1 1 1 1 0 0
@@ -34,7 +34,7 @@
              1 1 1 1 1 1 1 1 1 1 1
              1 0 1 1 1 1 1 1 1 0 1
              1 0 1 0 0 0 0 0 1 0 1
-             0 0 0 1 1 0 1 1 0 0 0)))
+             0 0 0 1 1 0 1 1 0 0 0))
   '(screen 2048 0))
 
 (func fill_pixels (pos len step color)
@@ -60,16 +60,14 @@
 
 (func pixel (pos color)
   ;;; draw a pixel at the given position in memory with the given color
-  (locals cursor ;; write position in memory
-          comp) ;; color component to write
+  (locals cursor) ;; write position in memory
   (set-local cursor (+ (mem 'screen) (* pos 4))) ;; 4 is pixel size
-  (set-local comp (+ (mem 'palette) (* color 3))) ;; 3 is palette color size
   ;; red component
-  (store-byte cursor (load-byte comp))
+  (store-byte cursor (load-byte color))
   ;; green component
-  (store-byte (+ cursor 1) (load-byte (+ comp 1)))
+  (store-byte (+ cursor 1) (load-byte (+ color 1)))
   ;; blue component
-  (store-byte (+ cursor 2) (load-byte (+ comp 2)))
+  (store-byte (+ cursor 2) (load-byte (+ color 2)))
   ;; alpha
   (store-byte (+ cursor 3) #xFF))
 
@@ -112,7 +110,7 @@
   (call 'fill_row (% (* 3 t) height) (mem 'palette 'blue))
 
   ;; space invader!!
-  (call 'sprite (% (* 2 t) width) (/ height 2) (mem 'sprite 'invader)))
+  (call 'sprite (% (* 2 t) width) (/ height 2) (mem 'sprites 'invader)))
 
 (export "memory" (memory 0))
 (export "init" (func $init))
