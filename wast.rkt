@@ -82,10 +82,28 @@
 (define (call name . args)
   `(call ,($ name) ,@(map var args)))
 
-(define memory '())
+(define memory (make-hash))
+
+(define (make-entry data)
+  (lambda (m)
+    (match m
+      (('name) (car data))
+      (('offset) (cadr data))
+      (('value) (caddr data)))))
+
+(define (make-memstring data)
+  )
 
 (define (data . entries)
-  (set! memory entries)
+  (for-each
+    (lambda (e)
+      (let ((entry (make-entry e)))
+        (hash-set! memory (entry 'name) (entry 'offset))
+        (when (memstring? (entry 'value))
+          (for-each
+            (lambda (m) (hash-set! memory (m 'name) (m 'offset)))
+            ((entry 'value) 'offsets (entry 'offset))))))
+    entries)
   "")
 
 (define (mem index)
@@ -115,7 +133,7 @@
 ;;
 ;; (memstring 2 '((apple 1) (orange 2) (lemon 3)))
 ;; "\00\01\00\02\00\03"
-(define (memstring size . entries)
+(define (format-memstring size . entries)
   (define (parse x)
     (list->string
       (flatten

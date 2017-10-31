@@ -7,34 +7,34 @@
 (data
   '(width 0 0)
   '(height 4 0)
-  `(palette 8 ,(memstring 3
-    '(black #x000000)
-    '(white #xFFFFFF)
-    '(red #xFF0000)
-    '(green #x00FF00)
-    '(blue #x0000FF)
-    '(maroon #x000000)
-    '(beige #x000000)
-    '(orange #x000000)
-    '(cyan #x000000)
-    '(purple #x000000)
-    '(pink #x000000)
-    '(yellow #x000000)
-    '(grey #x000000)
-    '(dark-grey #x000000)
-    '(dark-green #x000000)
-    '(dark-red #x000000)))
+  '(palette 8 (memstring 3
+    (black #x000000)
+    (white #xFFFFFF)
+    (red #xFF0000)
+    (green #x00FF00)
+    (blue #x0000FF)
+    (maroon #x000000)
+    (beige #x000000)
+    (orange #x000000)
+    (cyan #x000000)
+    (purple #x000000)
+    (pink #x000000)
+    (yellow #x000000)
+    (grey #x000000)
+    (dark-grey #x000000)
+    (dark-green #x000000)
+    (dark-red #x000000)))
   '(messages 256 "Hello world!")
-  `(sprites 1024 ,(memstring 1
-    '(invader 11 8
-              0 0 1 0 0 0 0 0 1 0 0
-              0 0 0 1 0 0 0 1 0 0 0
-              0 0 1 1 1 1 1 1 1 0 0
-              0 1 1 0 1 1 1 0 1 1 0
-              1 1 1 1 1 1 1 1 1 1 1
-              1 0 1 1 1 1 1 1 1 0 1
-              1 0 1 0 0 0 0 0 1 0 1
-              0 0 0 1 1 0 1 1 0 0 0)))
+  '(sprites 1024 (memstring 1
+    (invader 11 8
+             0 0 1 0 0 0 0 0 1 0 0
+             0 0 0 1 0 0 0 1 0 0 0
+             0 0 1 1 1 1 1 1 1 0 0
+             0 1 1 0 1 1 1 0 1 1 0
+             1 1 1 1 1 1 1 1 1 1 1
+             1 0 1 1 1 1 1 1 1 0 1
+             1 0 1 0 0 0 0 0 1 0 1
+             0 0 0 1 1 0 1 1 0 0 0)))
   '(screen 2048 0))
 
 (func fill_pixels (pos len step color)
@@ -79,9 +79,9 @@
 
 (func sprite (x y index)
   (locals width height color i)
-  (set-local width (load-byte (mem 'sprites)))
-  (set-local height (load-byte (+ 1 (mem 'sprites))))
-  (set-local color (+ 2 (mem 'sprites)))
+  (set-local width (load-byte index))
+  (set-local height (load-byte (+ 1 index)))
+  (set-local color (+ 2 index))
   (for i (* width height) 1
     (call 'plot (+ x (% i width)) (+ y (/ i width)) (load-byte (+ i color)))))
 
@@ -100,19 +100,19 @@
   (set-local width (load (mem 'width)))
   (set-local height (load (mem 'height)))
 
-  (call 'fill_screen 0)
+  (call 'fill_screen (mem 'palette 'black))
 
   ;; white horizontal line
-  (call 'fill_row (% t (load (mem 'height))) 1)
+  (call 'fill_row (% t (load (mem 'height))) (mem 'palette 'white))
   ;; red vertical line
-  (call 'fill_col (% (* 3 t) width) 2)
+  (call 'fill_col (% (* 3 t) width) (mem 'palette 'red))
   ;; green vertical line
-  (call 'fill_col (% t width) 3)
+  (call 'fill_col (% t width) (mem 'palette 'green))
   ;; blue horizontal line
-  (call 'fill_row (% (* 3 t) height) 4)
+  (call 'fill_row (% (* 3 t) height) (mem 'palette 'blue))
 
   ;; space invader!!
-  (call 'sprite (% (* 2 t) width) (/ height 2) 0))
+  (call 'sprite (% (* 2 t) width) (/ height 2) (mem 'sprite 'invader)))
 
 (export "memory" (memory 0))
 (export "init" (func $init))
