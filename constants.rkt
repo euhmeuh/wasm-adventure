@@ -11,7 +11,7 @@
     (lambda (e)
       (hash-set! *constants* (car e) (cadr e)))
     (cut entries 2))
-  "")
+  *noop*)
 
 (define (const x)
   (var (hash-ref *constants* x)))

@@ -20,6 +20,10 @@
 (define (memstring-elements memstr) (cddr memstr))
 (define (memstring-size memstr) (cadr memstr))
 
+;; save the offset of every symbol encoutered in the memstring
+;; in a hash-table and return it
+;;
+;; the offset is relative to base-offset
 (define (find-offsets memstr base-offset)
   (let ((offsets (make-hash))
         (i 0))
@@ -37,11 +41,11 @@
     (lambda (e)
       (let* ((entry (make-entry e))
              (value (entry 'value)))
-        (hash-set! *offsets* (entry 'name) (entry 'offset))
-        (when (memstring? value)
-          (hash-set! *offsets* (entry 'name) (find-offsets value (entry 'offset))))))
+        (if (memstring? value)
+          (hash-set! *offsets* (entry 'name) (find-offsets value (entry 'offset)))
+          (hash-set! *offsets* (entry 'name) (entry 'offset)))))
     entries)
-  "")
+  *noop*)
 
 (define (mem index . subindex)
   (if (and (pair? subindex) (symbol? (car subindex)))

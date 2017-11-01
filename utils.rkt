@@ -2,7 +2,10 @@
 
 (require racket/syntax)
 
-(provide flatten cut str $ var)
+(provide flatten cut str $ var *noop*)
+
+;; return this value from a procedure in order not to generate any output code
+(define *noop* "")
 
 (define (flatten data)
   (cond
