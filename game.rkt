@@ -7,7 +7,8 @@
 (constants
   'page-size #x10000
   'pixel-size 4
-  'color-size 3)
+  'color-size 3
+  'object-size 4)
 
 (data
   '(width 0 0)
@@ -32,6 +33,7 @@
      dark-red   #x000000))
   '(messages 256 "Hello world!")
   '(sprites 1024 (memstring 1
+     start
      invader 11 8
              0 0 1 0 0 0 0 0 1 0 0
              0 0 0 1 0 0 0 1 0 0 0
@@ -41,7 +43,32 @@
              1 0 1 1 1 1 1 1 1 0 1
              1 0 1 0 0 0 0 0 1 0 1
              0 0 0 1 1 0 1 1 0 0 0))
-  '(screen 2048 0))
+  '(game 2048 (memstring 4
+     score 0
+     life 0
+     level 0))
+  '(objects 2176 (memstring 1
+     start
+     0 50 50 1 ;; show sprite 0 at pos (10 10) with 1HP
+     0 70 50 1
+     0 90 50 1
+     0 110 50 1
+     0 130 50 1
+     0 150 50 1
+     0 170 50 1
+     0 190 50 1
+     end))
+  '(ranks 2560 (memstring 4
+     start
+     "JER" 44444444
+     "AAA" 10000000
+     "BBB"  5000000
+     "CCC"  2500000
+     "DDD"   100000
+     "EEE"    10000
+     "FFF"     5000
+     "GGG"      500))
+  '(screen 4092 0))
 
 (func fill_pixels (pos len step color)
   (for pos len step
@@ -96,31 +123,24 @@
   ;;; grow memory given the dimensions of the screen
   (store (mem 'width) width)
   (store (mem 'height) height)
-  `(grow_memory ,(/ (* (const 'pixel-size) (* width height))
+  `(grow_memory ,(/ (+ (mem 'screen) (* (const 'pixel-size) (* width height)))
                     (const 'page-size)))
   '(drop))
 
 (func hello ()
   (call 'log (mem 'messages) 12))
 
-(func render (t)
-  (locals width height)
-  (set-local width (load (mem 'width)))
-  (set-local height (load (mem 'height)))
-
+(func render (dt)
+  (locals i x y s)
   (call 'fill_screen (mem 'palette 'black))
 
-  ;; white horizontal line
-  (call 'fill_row (% t (load (mem 'height))) (mem 'palette 'white))
-  ;; red vertical line
-  (call 'fill_col (% (* 3 t) width) (mem 'palette 'red))
-  ;; green vertical line
-  (call 'fill_col (% t width) (mem 'palette 'green))
-  ;; blue horizontal line
-  (call 'fill_row (% (* 3 t) height) (mem 'palette 'blue))
-
-  ;; space invader!!
-  (call 'sprite (% (* 2 t) width) (/ height 2) (mem 'sprites 'invader)))
+  ;; show all sprites
+  (set-local i (mem 'objects 'start))
+  (for i (mem 'objects 'end) (const 'object-size)
+    (set-local s (load-byte i))
+    (set-local x (load-byte (+ 1 i)))
+    (set-local y (load-byte (+ 2 i)))
+    (call 'sprite x y (+ (mem 'sprites 'start) s))))
 
 (export "memory" (memory 0))
 (export "init" (func $init))

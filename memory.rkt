@@ -64,18 +64,22 @@
 ;; (format-memstring '(memstring 2 apple 1 orange 2 lemon 3))
 ;; "\00\01\00\02\00\03"
 (define (format-memstring memstr)
-  (define (parse x)
-    (list->string
-      (flatten
-        (cons #\\ (add-between
-          (cut
-            (string->list
-              (~r x #:min-width (* (memstring-size memstr) 2)
-                    #:pad-string "0"
-                    #:base 16))
-            2) #\\)))))
+  (define (hexa x)
+    (~r x #:min-width (* (memstring-size memstr) 2)
+          #:pad-string "0"
+          #:base 16))
 
-  (string-append* (map parse (flatten (memstring-elements memstr)))))
+  (define (parse x)
+    (if (string? x)
+      x
+      (list->string
+        (flatten
+          (cons #\\
+                (add-between
+                  (cut (string->list (hexa x)) 2)
+                  #\\))))))
+
+  (string-append* (map parse (remove-symbols (memstring-elements memstr)))))
 
 (define (data-section)
   (define (eval-value v)

@@ -2,16 +2,19 @@
 
 (require racket/syntax)
 
-(provide flatten cut str $ var *noop*)
+(provide flatten remove-symbols cut str $ var *noop*)
 
 ;; return this value from a procedure in order not to generate any output code
 (define *noop* "")
 
-(define (flatten data)
+(define (flatten l)
   (cond
-    ((or (null? data) (symbol? data)) '())
-    ((pair? data) (append (flatten (car data)) (flatten (cdr data))))
-    (else (list data))))
+    ((null? l) '())
+    ((pair? l) (append (flatten (car l)) (flatten (cdr l))))
+    (else (list l))))
+
+(define (remove-symbols l)
+  (filter (negate symbol?) l))
 
 (define (cut l n)
    (if (not (empty? l))
