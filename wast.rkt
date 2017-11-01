@@ -1,8 +1,9 @@
 #lang racket
 
 (require
+  "utils.rkt"
   "memory.rkt"
-  racket/syntax)
+  "constants.rkt")
 
 (provide (except-out (all-from-out racket)
                      #%module-begin
@@ -12,6 +13,8 @@
          export
          func
          call
+         constants
+         const
          data
          mem
          data-section
@@ -30,18 +33,6 @@
 (define-syntax-rule (module-begin expr ...)
   (#%module-begin
     (display `(module ,expr ... ,@(data-section)))))
-
-(define (str value)
-  (format "\"~a\"" value))
-
-(define ($ name)
-  (format-symbol "$~a" name))
-
-(define (var x)
-  (cond
-    ((symbol? x) `(get_local ,($ x)))
-    ((number? x) `(i32.const ,x))
-    (else x)))
 
 (define-syntax-rule (import path ... (name arg ...))
   (import-impl '(path ...) 'name '(arg ...)))

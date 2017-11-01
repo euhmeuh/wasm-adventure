@@ -1,5 +1,7 @@
 #lang racket
 
+(require "utils.rkt")
+
 (provide data mem data-section)
 
 (define *memory* '())
@@ -45,20 +47,6 @@
   (if (and (pair? subindex) (symbol? (car subindex)))
     `(i32.const ,(hash-ref (hash-ref *offsets* index) (car subindex)))
     `(i32.const ,(hash-ref *offsets* index))))
-
-(define (flatten data)
-  (cond
-    ((or (null? data) (symbol? data)) '())
-    ((pair? data) (append (flatten (car data)) (flatten (cdr data))))
-    (else (list data))))
-
-(define (cut l n)
-   (if (not (empty? l))
-       (cons (take l n) (cut (drop l n) n))
-       '()))
-
-(define (str value)
-  (format "\"~a\"" value))
 
 ;; transform a list of values into a string representing bytes
 ;;

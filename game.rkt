@@ -4,10 +4,16 @@
 
 '(memory 1)
 
+(constants
+  'page-size #x10000
+  'pixel-size 4
+  'color-size 3)
+
 (data
   '(width 0 0)
   '(height 4 0)
   '(palette 8 (memstring 3
+     start
      black      #x000000
      white      #xFFFFFF
      red        #xFF0000
@@ -81,13 +87,17 @@
   (set-local height (load-byte (+ 1 index)))
   (set-local color (+ 2 index))
   (for i (* width height) 1
-    (call 'plot (+ x (% i width)) (+ y (/ i width)) (load-byte (+ i color)))))
+    (call 'plot (+ x (% i width)) (+ y (/ i width))
+          ;; convert the color number to a palette index
+          (+ (mem 'palette 'start)
+             (* (const 'color-size) (load-byte (+ i color)))))))
 
 (func init (width height)
   ;;; grow memory given the dimensions of the screen
   (store (mem 'width) width)
   (store (mem 'height) height)
-  `(grow_memory ,(/ (* 4 (* width height)) #x10000)) ;; 0x10000 is memory page size
+  `(grow_memory ,(/ (* (const 'pixel-size) (* width height))
+                    (const 'page-size)))
   '(drop))
 
 (func hello ()
