@@ -1,6 +1,7 @@
 #lang s-exp "wast.rkt"
 
 (import "console" "log" (log pos len))
+(import "console" "lognum" (log-num i))
 
 '(memory 1)
 
@@ -8,7 +9,10 @@
   'page-size #x10000
   'pixel-size 4
   'color-size 3
-  'object-size 4)
+  'object-size 4
+  'alien-cols 9
+  'alien-rows 5
+  'alien-spacing 15)
 
 (data
   '(width 0 0)
@@ -42,32 +46,44 @@
              1 1 1 1 1 1 1 1 1 1 1
              1 0 1 1 1 1 1 1 1 0 1
              1 0 1 0 0 0 0 0 1 0 1
-             0 0 0 1 1 0 1 1 0 0 0))
+             0 0 0 1 1 0 1 1 0 0 0
+     player 11 8
+            0 0 0 0 0 1 0 0 0 0 0
+            0 0 0 0 0 1 0 0 0 0 0
+            0 0 0 0 0 1 0 0 0 0 0
+            0 1 0 0 1 1 1 0 0 1 0
+            1 1 1 1 1 0 1 1 1 1 1
+            1 1 1 1 1 1 1 1 1 1 1
+            1 0 1 1 1 1 1 1 1 0 1
+            1 0 1 0 1 1 1 0 1 0 1
+     ))
   '(game 2048 (memstring 4
      score 0
-     life 0
+     life 3
      level 0))
-  '(objects 2176 (memstring 1
+  '(aliens 2176 (memstring 1
+     x 10 y 10
      start
-     0 50 50 1 ;; show sprite 0 at pos (10 10) with 1HP
-     0 70 50 1
-     0 90 50 1
-     0 110 50 1
-     0 130 50 1
-     0 150 50 1
-     0 170 50 1
-     0 190 50 1
-     end))
-  '(ranks 2560 (memstring 4
+     1 1 1 1 1 1 1 1 1
+     1 1 0 1 1 1 0 1 1
+     1 1 1 1 1 1 1 1 1
+     1 1 1 1 1 1 1 1 1
+     1 0 1 1 0 1 1 0 1))
+  '(player 2560 (memstring 1
+     x 110 y 200))
+  '(ranks 2670 (memstring 4
      start
+     "SIM" 66666666
      "JER" 44444444
-     "AAA" 10000000
+     "BEN" 10101010
+     "AAA"  9000000
      "BBB"  5000000
      "CCC"  2500000
      "DDD"   100000
      "EEE"    10000
      "FFF"     5000
-     "GGG"      500))
+     "GGG"      500
+     end))
   '(screen 4092 0))
 
 (func fill_pixels (pos len step color)
@@ -130,19 +146,42 @@
 (func hello ()
   (call 'log (mem 'messages) 12))
 
-(func render (dt)
-  (locals i x y s)
-  (call 'fill_screen (mem 'palette 'black))
+(func show-aliens ()
+  (locals i x y)
+  (set-local x (load-byte (mem 'aliens 'x)))
+  (set-local y (load-byte (mem 'aliens 'y)))
 
-  ;; show all sprites
-  (set-local i (mem 'objects 'start))
-  (for i (mem 'objects 'end) (const 'object-size)
-    (set-local s (load-byte i))
-    (set-local x (load-byte (+ 1 i)))
-    (set-local y (load-byte (+ 2 i)))
-    (call 'sprite x y (+ (mem 'sprites 'start) s))))
+  (for i (* (const 'alien-cols) (const 'alien-rows)) 1
+    (if (load-byte (+ i (mem 'aliens 'start)))
+      (call 'sprite
+            (+ x (* (% i (const 'alien-cols))
+                    (const 'alien-spacing)))
+            (+ y (* (/ i (const 'alien-cols))
+                    (const 'alien-spacing)))
+            (mem 'sprites 'invader)))))
+
+(func show-player ()
+  (call 'sprite
+        (load-byte (mem 'player 'x))
+        (load-byte (mem 'player 'y))
+        (mem 'sprites 'player)))
+
+(func render (frame)
+  (call 'fill_screen (mem 'palette 'black))
+  (call 'fill_col (% (* 3 frame) 220) (mem 'palette 'red))
+  (call 'fill_col (% (* 2 frame) 220) (mem 'palette 'green))
+  (call 'fill_row (% (* 3 frame) 220) (mem 'palette 'blue))
+  (call 'show-aliens)
+  (call 'show-player))
+
+(func move-aliens (i)
+  (store-byte (mem 'aliens 'x) i))
+
+(func update (frame)
+  (call 'move-aliens (% frame 220)))
 
 (export "memory" (memory 0))
 (export "init" (func $init))
 (export "render" (func $render))
+(export "update" (func $update))
 (export "hello" (func $hello))

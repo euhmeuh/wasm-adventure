@@ -75,6 +75,9 @@
               var bytes = new Uint8Array(memory.buffer, offset, length);
               var string = new TextDecoder('utf8').decode(bytes);
               console.log(string);
+            },
+            lognum: function(i) {
+              console.log(`Value: ${i}`);
             }
           }
         };
@@ -96,6 +99,7 @@
           let fc = new FpsCtrl(30, (e) => {
             instance.exports.render(e.frame);
             ctx.putImageData(imageData, 0, 0);
+            instance.exports.update(e.frame);
           });
 
           fc.start();

@@ -19,10 +19,12 @@ win.FpsCtrl = function (fps, callback) {
       if (time === null) time = timestamp;
       var seg = Math.floor((timestamp - time) / delay);
       if (seg > frame) { // moved to next frame?
+          delta = seg - frame;
           frame = seg;
           callback({
               time: timestamp,
-              frame: frame
+              frame: frame,
+              delta: delta
           })
       }
       tref = requestAnimationFrame(loop)

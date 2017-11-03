@@ -7,7 +7,7 @@
 
 (provide (except-out (all-from-out racket)
                      #%module-begin
-                     + - / *)
+                     + - / * = < <= > >= if)
          (rename-out (module-begin #%module-begin))
          import
          export
@@ -24,6 +24,13 @@
          (rename-out (mul *))
          (rename-out (div /))
          (rename-out (rem %))
+         (rename-out (eq =))
+         (rename-out (ne !=))
+         (rename-out (lt <))
+         (rename-out (le <=))
+         (rename-out (gt >))
+         (rename-out (ge >=))
+         (rename-out (if% if))
          set-local
          load
          load-byte
@@ -97,6 +104,37 @@
        (set_local ,($ counter)
          ,(add counter step))
        (br $loop))))
+
+(define (eq x y)
+  `(i32.eq ,(var x) ,(var y)))
+
+(define (ne x y)
+  `(i32.ne ,(var x) ,(var y)))
+
+(define (lt x y)
+  `(i32.lt_u ,(var x) ,(var y)))
+
+(define (le x y)
+  `(i32.le_u ,(var x) ,(var y)))
+
+(define (gt x y)
+  `(i32.gt_u ,(var x) ,(var y)))
+
+(define (ge x y)
+  `(i32.ge_u ,(var x) ,(var y)))
+
+(define-syntax if%
+  (syntax-rules (then else)
+    ((_ condition (then body ...) (else other-body ...))
+     (if-impl condition `(,body ...) `(,other-body ...)))
+
+    ((_ condition body ...)
+     (if-impl condition `(,body ...) '()))))
+
+(define (if-impl condition bodies elses)
+  (if (pair? elses)
+    `(if ,condition (then ,@bodies) (else ,@elses))
+    `(if ,condition (then ,@bodies))))
 
 (define (set-local x y)
   `(set_local ,($ x) ,y))
