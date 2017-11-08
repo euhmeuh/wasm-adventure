@@ -63,6 +63,9 @@
      level 0))
   '(aliens 2176 (memstring 1
      x 10 y 10
+     speed 1
+     down 0
+     direction 1
      start
      1 1 1 1 1 1 1 1 1
      1 1 0 1 1 1 0 1 1
@@ -166,19 +169,49 @@
         (load-byte (mem 'player 'y))
         (mem 'sprites 'player)))
 
-(func render (frame)
+(func render ()
   (call 'fill_screen (mem 'palette 'black))
-  (call 'fill_col (% (* 3 frame) 220) (mem 'palette 'red))
-  (call 'fill_col (% (* 2 frame) 220) (mem 'palette 'green))
-  (call 'fill_row (% (* 3 frame) 220) (mem 'palette 'blue))
   (call 'show-aliens)
   (call 'show-player))
 
-(func move-aliens (i)
-  (store-byte (mem 'aliens 'x) i))
+(func move-aliens (delta)
+  (locals x y speed down direction)
+  (set-local x (load-byte (mem 'aliens 'x)))
+  (set-local y (load-byte (mem 'aliens 'y)))
+  (set-local speed (load-byte (mem 'aliens 'speed)))
+  (set-local down (load-byte (mem 'aliens 'down)))
+  (set-local direction (load-byte (mem 'aliens 'direction)))
+  (if down
+    (then
+      (set-local y (+ y speed))
+      (store-byte (mem 'aliens 'down) (+ down speed)))
+    (else
+      (if (and (call 'aliens-at-border? direction)
+               (>= down (const 'alien-spacing)))
+        (then
+          (store-byte (mem 'aliens 'down) 0)
+          (call 'switch-direction direction))
+        (else
+          (set-local x (call 'move x direction speed))))))
+  (store-byte (mem 'aliens 'x) x)
+  (store-byte (mem 'aliens 'y) y))
 
-(func update (frame)
-  (call 'move-aliens (% frame 220)))
+(func move (pos direction speed) =>
+  (if direction =>
+    (then (+ pos speed))
+    (else (- pos speed))))
+
+(func switch-direction (direction)
+  (store-byte (mem 'aliens 'direction)
+              (not direction)))
+
+(func aliens-at-border? (direction) =>
+  (locals x)
+  (set-local x (load-byte (mem 'aliens 'x)))
+  (or (>= x 50) (<= x 5)))
+
+(func update (delta)
+  (call 'move-aliens delta))
 
 (export "memory" (memory 0))
 (export "init" (func $init))

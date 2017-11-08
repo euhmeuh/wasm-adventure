@@ -2,7 +2,7 @@
 
 (require racket/syntax)
 
-(provide flatten remove-symbols cut str $ var *noop*)
+(provide flatten remove-symbols cut str $ var result *noop*)
 
 ;; return this value from a procedure in order not to generate any output code
 (define *noop* "")
@@ -32,3 +32,6 @@
     ((symbol? x) `(get_local ,($ x)))
     ((number? x) `(i32.const ,x))
     (else x)))
+
+(define (result bool)
+    (if bool '(result i32) *noop*))

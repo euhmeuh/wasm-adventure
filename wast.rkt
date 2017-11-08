@@ -13,6 +13,7 @@
          export
          func
          call
+         return
          constants
          const
          data
@@ -31,6 +32,10 @@
          (rename-out (gt >))
          (rename-out (ge >=))
          (rename-out (if% if))
+         not
+         and
+         or
+         xor
          set-local
          load
          load-byte
@@ -54,24 +59,33 @@
   `(export ,(str name) ,object))
 
 (define-syntax func
-  (syntax-rules (locals)
+  (syntax-rules (=> locals)
+    ((_ name (arg ...) => (locals loc ...) body ...)
+     (let ((arg 'arg) ... (loc 'loc) ...)
+       (func-impl #t 'name '(arg ...) '(loc ...) body ...)))
+
     ((_ name (arg ...) (locals loc ...) body ...)
      (let ((arg 'arg) ... (loc 'loc) ...)
-       (func-impl 'name '(arg ...) '(loc ...) body ...)))
+       (func-impl #f 'name '(arg ...) '(loc ...) body ...)))
+
+    ((_ name (arg ...) => body ...)
+     (let ((arg 'arg) ...)
+       (func-impl #t 'name '(arg ...) '() body ...)))
 
     ((_ name (arg ...) body ...)
      (let ((arg 'arg) ...)
-       (func-impl 'name '(arg ...) '() body ...)))))
+       (func-impl #f 'name '(arg ...) '() body ...)))))
 
-(define (func-impl name args locals . body)
+(define (func-impl return name args locals . body)
   (define (eval-arg arg)
     `(param ,($ arg) i32))
   (define (eval-loc loc)
     `(local ,($ loc) i32))
   `(func ,($ name)
          ,@(map eval-arg args)
+         ,(result return)
          ,@(map eval-loc locals)
-         ,@body))
+         ,@(map var body)))
 
 (define (func-signature name args)
   (define (eval-arg arg) `(param i32))
@@ -80,6 +94,9 @@
 
 (define (call name . args)
   `(call ,($ name) ,@(map var args)))
+
+(define (return x)
+  `(return ,(var x)))
 
 (define (add x y)
   `(i32.add ,(var x) ,(var y)))
@@ -123,18 +140,36 @@
 (define (ge x y)
   `(i32.ge_u ,(var x) ,(var y)))
 
+(define (and x y)
+  `(i32.and ,(var x) ,(var y)))
+
+(define (or x y)
+  `(i32.or ,(var x) ,(var y)))
+
+(define (xor x y)
+  `(i32.xor ,(var x) ,(var y)))
+
+(define (not x)
+  (ne x 0))
+
 (define-syntax if%
-  (syntax-rules (then else)
+  (syntax-rules (=> then else)
+    ((_ condition => (then body ...) (else other-body ...))
+     (if-impl #t condition `(,body ...) `(,other-body ...)))
+
     ((_ condition (then body ...) (else other-body ...))
-     (if-impl condition `(,body ...) `(,other-body ...)))
+     (if-impl #f condition `(,body ...) `(,other-body ...)))
+
+    ((_ condition => body ...)
+     (if-impl #t condition `(,body ...) '()))
 
     ((_ condition body ...)
-     (if-impl condition `(,body ...) '()))))
+     (if-impl #f condition `(,body ...) '()))))
 
-(define (if-impl condition bodies elses)
+(define (if-impl return condition bodies elses)
   (if (pair? elses)
-    `(if ,condition (then ,@bodies) (else ,@elses))
-    `(if ,condition (then ,@bodies))))
+    `(if ,(result return) ,(var condition) (then ,@bodies) (else ,@elses))
+    `(if ,(result return) ,(var condition) (then ,@bodies))))
 
 (define (set-local x y)
   `(set_local ,($ x) ,y))
