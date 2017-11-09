@@ -150,7 +150,7 @@
   `(i32.xor ,(var x) ,(var y)))
 
 (define (not x)
-  (ne x 0))
+  (eq x 0))
 
 (define-syntax if%
   (syntax-rules (=> then else)
@@ -172,7 +172,7 @@
     `(if ,(result return) ,(var condition) (then ,@bodies))))
 
 (define (set-local x y)
-  `(set_local ,($ x) ,y))
+  `(set_local ,($ x) ,(var y)))
 
 (define (load index)
   `(i32.load ,(var index)))

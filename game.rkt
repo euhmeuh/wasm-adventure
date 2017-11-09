@@ -12,7 +12,11 @@
   'object-size 4
   'alien-cols 9
   'alien-rows 5
-  'alien-spacing 15)
+  'alien-spacing 15
+  'up 0
+  'down 1
+  'left 2
+  'right 3)
 
 (data
   '(width 0 0)
@@ -65,7 +69,7 @@
      x 10 y 10
      speed 1
      down 0
-     direction 1
+     direction 3
      start
      1 1 1 1 1 1 1 1 1
      1 1 0 1 1 1 0 1 1
@@ -181,34 +185,41 @@
   (set-local speed (load-byte (mem 'aliens 'speed)))
   (set-local down (load-byte (mem 'aliens 'down)))
   (set-local direction (load-byte (mem 'aliens 'direction)))
+  (if (call 'aliens-at-border? direction)
+    (if (not down)
+      ;; let's start moving down
+      (set-local down 1))
+    (if (>= down (const 'alien-spacing))
+        ;; we finished moving down, let's change direction
+        (set-local down 0)
+        (set-local direction (call 'switch-direction direction))))
   (if down
     (then
       (set-local y (+ y speed))
-      (store-byte (mem 'aliens 'down) (+ down speed)))
+      (set-local down (+ down speed)))
     (else
-      (if (and (call 'aliens-at-border? direction)
-               (>= down (const 'alien-spacing)))
-        (then
-          (store-byte (mem 'aliens 'down) 0)
-          (call 'switch-direction direction))
-        (else
-          (set-local x (call 'move x direction speed))))))
+      (set-local x (call 'move x direction speed))))
   (store-byte (mem 'aliens 'x) x)
-  (store-byte (mem 'aliens 'y) y))
+  (store-byte (mem 'aliens 'y) y)
+  (store-byte (mem 'aliens 'down) down))
 
 (func move (pos direction speed) =>
-  (if direction =>
+  (if (= direction (const 'right)) =>
     (then (+ pos speed))
     (else (- pos speed))))
 
-(func switch-direction (direction)
-  (store-byte (mem 'aliens 'direction)
-              (not direction)))
+(func switch-direction (direction) =>
+  (set-local direction
+    (if (= direction (const 'left)) =>
+      (then (const 'right))
+      (else (const 'left))))
+  (store-byte (mem 'aliens 'direction) direction)
+  direction)
 
 (func aliens-at-border? (direction) =>
   (locals x)
   (set-local x (load-byte (mem 'aliens 'x)))
-  (or (>= x 50) (<= x 5)))
+  (or (>= x 80) (<= x 5)))
 
 (func update (delta)
   (call 'move-aliens delta))
