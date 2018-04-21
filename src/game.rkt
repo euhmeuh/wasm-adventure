@@ -1,4 +1,4 @@
-#lang s-exp "wast.rkt"
+#lang s-exp "wat.rkt"
 
 (import "console" "log" (log pos len))
 (import "console" "lognum" (log-num i))

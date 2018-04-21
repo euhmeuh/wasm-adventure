@@ -11,7 +11,7 @@
         color: white;
       }
       #console {
-        background-image: url("dmg.svg");
+        background-image: url("static/dmg.svg");
         background-position: center;
         background-repeat: no-repeat;
         width: 500px;
@@ -43,7 +43,7 @@
     <div class="center">
       <a href="https://github.com/euhmeuh/wasm-adventure">Github project</a>
     </div>
-    <script src="fpsctrl.js"></script>
+    <script src="static/fpsctrl.js"></script>
     <script type="text/javascript">
       function fetchAndInstantiate(url, importObject) {
         return fetch(url).then(response =>
@@ -82,7 +82,7 @@
           }
         };
 
-        fetchAndInstantiate('game.wasm', importObject)
+        fetchAndInstantiate('build/game.wasm', importObject)
           .then((inst) => instance = inst)
           .then(() => game())
           .catch((err) => {

@@ -1,4 +1,0 @@
-#!/bin/bash
-
-racket game.rkt > game.wast
-wat2wasm game.wast -o game.wasm
