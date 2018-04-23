@@ -9,10 +9,6 @@
   'page-size #x10000
   'pixel-size 4
   'color-size 3
-  'object-size 4
-  'alien-cols 9
-  'alien-rows 5
-  'alien-spacing 15
   'up 0
   'down 1
   'left 2
@@ -22,23 +18,23 @@
   '(width 0 0)
   '(height 4 0)
   '(palette 8 (memstring 3
-     start
-     black      #x000000
-     white      #xFFFFFF
-     red        #xFF0000
-     green      #x00FF00
-     blue       #x0000FF
-     maroon     #x000000
-     beige      #x000000
-     orange     #x000000
-     cyan       #x000000
-     purple     #x000000
-     pink       #x000000
-     yellow     #x000000
-     grey       #x000000
-     dark-grey  #x000000
-     dark-green #x000000
-     dark-red   #x000000))
+     start       ;; Pico8 palette
+     black       #x000000
+     dark-blue   #x1D2B53
+     dark-purple #x7E2553
+     dark-green  #x008751
+     brown       #xAB5236
+     dark-gray   #x5F574F
+     light-gray  #xC2C3C7
+     white       #xFFF1E8
+     red         #xFF004D
+     orange      #xFFA300
+     yellow      #xFFEC27
+     green       #x00E436
+     blue        #x29ADFF
+     indigo      #x83769C
+     pink        #xFF77A8
+     peach       #xFFCCAA))
   '(messages 256 "Hello world!")
   '(sprites 1024 (memstring 1
      start
@@ -61,36 +57,9 @@
             1 0 1 1 1 1 1 1 1 0 1
             1 0 1 0 1 1 1 0 1 0 1
      ))
-  '(game 2048 (memstring 4
-     score 0
-     life 3
+  '(game 2048 (memstring 1
+     coins 0
      level 0))
-  '(aliens 2176 (memstring 1
-     x 10 y 10
-     speed 1
-     down 0
-     direction 3
-     start
-     1 1 1 1 1 1 1 1 1
-     1 1 0 1 1 1 0 1 1
-     1 1 1 1 1 1 1 1 1
-     1 1 1 1 1 1 1 1 1
-     1 0 1 1 0 1 1 0 1))
-  '(player 2560 (memstring 1
-     x 110 y 200))
-  '(ranks 2670 (memstring 4
-     start
-     "SIM" 66666666
-     "JER" 44444444
-     "BEN" 10101010
-     "AAA"  9000000
-     "BBB"  5000000
-     "CCC"  2500000
-     "DDD"   100000
-     "EEE"    10000
-     "FFF"     5000
-     "GGG"      500
-     end))
   '(screen 4092 0))
 
 (func fill_pixels (pos len step color)
@@ -153,79 +122,20 @@
 (func hello ()
   (call 'log (mem 'messages) 12))
 
-(func show-aliens ()
-  (locals i x y)
-  (set-local x (load-byte (mem 'aliens 'x)))
-  (set-local y (load-byte (mem 'aliens 'y)))
-
-  (for i (* (const 'alien-cols) (const 'alien-rows)) 1
-    (if (load-byte (+ i (mem 'aliens 'start)))
-      (call 'sprite
-            (+ x (* (% i (const 'alien-cols))
-                    (const 'alien-spacing)))
-            (+ y (* (/ i (const 'alien-cols))
-                    (const 'alien-spacing)))
-            (mem 'sprites 'invader)))))
-
-(func show-player ()
-  (call 'sprite
-        (load-byte (mem 'player 'x))
-        (load-byte (mem 'player 'y))
-        (mem 'sprites 'player)))
-
 (func render ()
+  (locals i)
+  (set-local i 0)
   (call 'fill_screen (mem 'palette 'black))
-  (call 'show-aliens)
-  (call 'show-player))
+  (for i (load (mem 'height)) 1
+    (call 'fill_row i (+ (* (% i 16)
+                            (const 'color-size))
+                         (mem 'palette 'start)))))
 
-(func move-aliens (delta)
-  (locals x y speed down direction)
-  (set-local x (load-byte (mem 'aliens 'x)))
-  (set-local y (load-byte (mem 'aliens 'y)))
-  (set-local speed (load-byte (mem 'aliens 'speed)))
-  (set-local down (load-byte (mem 'aliens 'down)))
-  (set-local direction (load-byte (mem 'aliens 'direction)))
-  (if (call 'aliens-at-border? direction)
-    (if (not down)
-      ;; let's start moving down
-      (set-local down 1))
-    (if (>= down (const 'alien-spacing))
-        ;; we finished moving down, let's change direction
-        (set-local down 0)
-        (set-local direction (call 'switch-direction direction))))
-  (if down
-    (then
-      (set-local y (+ y speed))
-      (set-local down (+ down speed)))
-    (else
-      (set-local x (call 'move x direction speed))))
-  (store-byte (mem 'aliens 'x) x)
-  (store-byte (mem 'aliens 'y) y)
-  (store-byte (mem 'aliens 'down) down))
-
-(func move (pos direction speed) =>
-  (if (= direction (const 'right)) =>
-    (then (+ pos speed))
-    (else (- pos speed))))
-
-(func switch-direction (direction) =>
-  (set-local direction
-    (if (= direction (const 'left)) =>
-      (then (const 'right))
-      (else (const 'left))))
-  (store-byte (mem 'aliens 'direction) direction)
-  direction)
-
-(func aliens-at-border? (direction) =>
-  (locals x)
-  (set-local x (load-byte (mem 'aliens 'x)))
-  (or (>= x 80) (<= x 5)))
-
-(func update (delta)
-  (call 'move-aliens delta))
+;;(func update (delta)
+;;  todo)
 
 (export "memory" (memory 0))
 (export "init" (func $init))
 (export "render" (func $render))
-(export "update" (func $update))
+;;(export "update" (func $update))
 (export "hello" (func $hello))
