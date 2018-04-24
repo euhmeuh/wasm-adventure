@@ -129,6 +129,41 @@
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+    ))
+  '(units 2314 (memstring 1
+     soldier 16 32
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  6  6  6  6  6  6  0  0  0  0  0  0  0
+      0  0  6  6  7  6  6  6  6  6  0  0  0  6  0  0
+      0  0  6  7  6  6  4  4  4  4  0  0  7  6  0  0
+      0  0  6  7  6  4 15 15 15 15  0  0  7  6  0  0
+      0  0  6  6  6  4 15  9 15 15  0  0  7  6  0  0
+      0  0  6  6  6  4 15 15 15 15  0  0  7  6  0  0
+      0  0  0  6  6 15 15 15 15 15  0  0  7  6  0  0
+      0  0 13 13  6  6  6  6 13 13  0  0  7  6  0  0
+      0  0 13 13 13 13 13 13 13 13  0  6  6  6  6  0
+      0  0  5  5  5  5  5  5  5  5  5  5  4  4  0  0
+      0  0  5  5  5  5  5  5  5  5  5  5  4  4  0  0
+      0  0  5  5  5  5  5  5  5  5  5  5  4  4  0  0
+      0  0  5  5  5  5  5  5  5  5  0  0  0  0  0  0
+      0  0  6  6  6  6  6  6  6  6  0  0  0  0  0  0
+      0  0  6  6  6  0  0  6  6  6  0  0  0  0  0  0
+      0  0  6  6  0  0  0  0  6  6  0  0  0  0  0  0
+      0  0  6  6  0  0  0  0  6  6  0  0  0  0  0  0
+      0  0  6  6  0  0  0  0  6  6  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
      ))
   '(levels 6144 (memstring 1
      level1
@@ -147,9 +182,9 @@
      0 0 0 0 1 1 1 1 0 0 0 0 0
      3 3 0 0 1 1 1 1 1 2 2 0 3
      4 4 0 1 1 1 1 1 1 1 1 2 4
-     player-units
+     level1-player-units
      66 1 78 0 81 0 104 0 #xFF #xFF
-     ennemy-units
+     level1-ennemy-units
      52 0 74 2 88 1 89 1 104 0 #xFF #xFF
      ))
   '(game 7876 (memstring 1
@@ -216,22 +251,38 @@
                     (const 'page-size)))
   '(drop))
 
+;; get tile x position on screen based on the tile index
+(func tile_x (i) =>
+  (return (+ (const 'board-offset-x) (* i 16))))
+
+;; get tile y position on screen based on the tile index
+(func tile_y (i) =>
+  (return (+ (const 'board-offset-y) (* i 16))))
+
 (func show_level (level)
   (locals i tile)
   (set-local i 0)
   (set-local tile 0)
   (for i (* (const 'board-width) (const 'board-height)) 1
     (set-local tile (load-byte (+ level i)))
-    (call 'sprite (+ (const 'board-offset-x) (* (% i (const 'board-width)) 16))
-                  (+ (const 'board-offset-y) (* (/ i (const 'board-width)) 16))
+    (call 'sprite (call 'tile_x (% i (const 'board-width)))
+                  (call 'tile_y (/ i (const 'board-width)))
                   (+ (mem 'tiles 'start) (* (const 'tile-size) tile)))))
+
+(func show_units (unit_list)
+  (locals pos level)
+  ;; TODO
+  (call 'sprite (call 'tile_x 3)
+                (call 'tile_y 4)
+                (mem 'units 'soldier)))
 
 (func hello ()
   (call 'log (mem 'messages) 12))
 
 (func render ()
   (call 'fill_screen (mem 'palette 'black))
-  (call 'show_level (mem 'levels 'level1)))
+  (call 'show_level (mem 'levels 'level1))
+  (call 'show_units (mem 'levels 'level1-player-units)))
 
 ;;(func update (delta)
 ;;  todo)
