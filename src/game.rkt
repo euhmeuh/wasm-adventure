@@ -24,7 +24,7 @@
   '(height 4 0)
   '(palette 8 (memstring 3
      start       ;; Pico8 palette
-     black       #x000000
+     transparent #x000000
      dark-blue   #x1D2B53
      dark-purple #x7E2553
      dark-green  #x008751
@@ -39,7 +39,8 @@
      blue        #x29ADFF
      indigo      #x83769C
      pink        #xFF77A8
-     peach       #xFFCCAA))
+     peach       #xFFCCAA
+     black       #x000000))
   '(messages 256 "Hello world!")
   '(tiles 1024 (memstring 1
      start
@@ -180,15 +181,17 @@
 (func pixel (pos color)
   ;;; draw a pixel at the given position in memory with the given color
   (locals cursor) ;; write position in memory
-  (set-local cursor (+ (mem 'screen) (* pos 4))) ;; 4 is pixel size
-  ;; red component
-  (store-byte cursor (load-byte color))
-  ;; green component
-  (store-byte (+ cursor 1) (load-byte (+ color 1)))
-  ;; blue component
-  (store-byte (+ cursor 2) (load-byte (+ color 2)))
-  ;; alpha
-  (store-byte (+ cursor 3) #xFF))
+
+  (if (!= color (mem 'palette 'transparent))
+    (set-local cursor (+ (mem 'screen) (* pos 4))) ;; 4 is pixel size
+    ;; red component
+    (store-byte cursor (load-byte color))
+    ;; green component
+    (store-byte (+ cursor 1) (load-byte (+ color 1)))
+    ;; blue component
+    (store-byte (+ cursor 2) (load-byte (+ color 2)))
+    ;; alpha
+    (store-byte (+ cursor 3) #xFF)))
 
 (func plot (x y color)
   ;;; draw a pixel at the given coordinates
