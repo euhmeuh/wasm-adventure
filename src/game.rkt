@@ -10,6 +10,7 @@
   'pixel-size 4
   'color-size 3
   'tile-size 258
+  'soldier-size 514
   'key-up 0
   'key-down 1
   'key-left 2
@@ -204,6 +205,39 @@
       0  0  6  6  0  0  0  0  6  6  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+    soldier2 16 32
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  7  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  7  6  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  6  6  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  6  6  0  0  0  0  0  0  6  0  0
+      0  0  7  0  0  7  6  0  0  7  0  0  7  6  0  0
+      0  0  6  0  7  6  6  6  0  6  0  0  7  6  0  0
+      0  0  6  6  6  6  6  6  6  6  0  0  7  6  0  0
+      0  0  6  6  7  6  6  6  6  6  0  0  7  6  0  0
+      0  0  6  7  6  6  4  4  4  6  0  0  7  6  0  0
+      0  0  6  7  6  4 15 15  4  6  0  0  7  6  0  0
+      0  0  6  6  6  4 15  9 15  4  0  0  7  6  0  0
+      0  0  6  6  6  4 15 15 15 15  0  0  7  6  0  0
+      0 13 13  6  6 15 15 15 15 15 13  0  7  6  0  0
+      0 13 13 13  6  6  6  6 13 13 13  0  7  6  0  0
+      0 13 13 13 13 13 13 13 13 13  6  0  7  6  0  6
+      0 12  5  5 13 13 13 13 13  5  6  6  6  6  6  6
+      0 12  5 13  5 13 13 13  5  13 5  5  6  7  0  0
+      0 12  5  5 13  5 13  5 13  5  5  5  7  6  0  0
+      0 12  5  5  5  5  5  5  5  5 12  0  6  7  0  0
+      0 12  6  6  6  6  6  6  6  6 12  0  0  0  0  0
+      0 12  6  6  6 12 12  6  6  6 12  0  0  0  0  0
+      0 12  6  6 12 12 12 12  6  6 12  0  0  0  0  0
+      0 12  6  6 12 12 12 12  6  6 12  0  0  0  0  0
+      0  0  6  6  0  0  0  0  6  6  0  0  0  0  0  0
+      0  0  6  6  0  0  0  0  6  6  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
      ))
   '(ui 5120 (memstring 1
      cursor-top 20 10
@@ -390,7 +424,8 @@
     (if (= pos #xFF) (break))
     (call 'sprite (call 'tile-x pos)
                   (call 'tile-y (call 'row-up pos))
-                  (mem 'units 'soldier0))))
+                  (+ (mem 'units 'soldier0)
+                     (* level (const 'soldier-size))))))
 
 (func show-cursor-top ()
   (locals pos)
@@ -561,7 +596,7 @@
 
 (func render ()
   (call 'fill-screen (mem 'palette 'black))
-  (call 'show-level (mem 'levels 'level1))
+  (call 'show-level (call 'current-level))
   (call 'show-cursor-top)
   (call 'show-units (mem 'levels 'level1-player-units))
   (call 'show-units (mem 'levels 'level1-ennemy-units))
