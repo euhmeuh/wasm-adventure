@@ -128,12 +128,12 @@
 
       function initKeyboard (engine) {
         let keyCodes = [
-          { val: 38, game: 0 }, // up
-          { val: 40, game: 1 }, // down
-          { val: 37, game: 2 }, // left
-          { val: 39, game: 3 }, // right
-          { val: 65, game: 4 }, // a
-          { val: 66, game: 5 }, // b
+          { val: 73, game: 0 }, // i - up
+          { val: 75, game: 1 }, // k - down
+          { val: 74, game: 2 }, // j - left
+          { val: 76, game: 3 }, // l - right
+          { val: 72, game: 4 }, // h - a
+          { val: 71, game: 5 }, // g - b
         ]
         document.addEventListener('keydown', function(event) {
           let key = find(keyCodes, (k) => k.val == event.keyCode);
