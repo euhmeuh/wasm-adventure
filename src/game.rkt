@@ -20,7 +20,10 @@
   'board-offset-y 22
   'board-width 13
   'board-height 11
-  'no-selection #xFF)
+  'no-selection #xFF
+  'max-units 143
+  'player-unit 1
+  'ennemy-unit 2)
 
 (data
   '(width 0 0)
@@ -416,14 +419,42 @@
 (func is-selection? (pos) =>
   (return (= pos (load-byte (mem 'game 'selection)))))
 
+(func current-level () =>
+  ;;(locals level)
+  ;;(set-local level (load-byte (mem 'game 'level)))
+  (return (mem 'levels 'level1)))
+
+(func current-level-units () =>
+  (return (+ (call 'current-level)
+             (* (const 'board-width) (const 'board-height)))))
+
 (func is-unit? (pos) =>
-  (return 1))
+  (locals i units unit ennemy? result)
+  (set-local i 0)
+  (set-local result 0)
+  (set-local ennemy? 0)
+  (set-local units (call 'current-level-units))
+  (for i (* 2 (const 'max-units)) 2
+    (set-local unit (load-byte (+ units i)))
+    (if (= unit pos)
+      (set-local result (if ennemy? =>
+                          (then (const 'ennemy-unit))
+                          (else (const 'player-unit))))
+      (break))
+    (if (and (= unit #xFF) ennemy?)
+      ;; we finished scanning everything
+      (break))
+    (if (and (= unit #xFF) (not ennemy?))
+      ;; we finished scanning player units
+      ;; so the following units will be ennemies
+      (set-local ennemy? 1)))
+  (return result))
 
 (func is-player-unit? (pos) =>
-  (return 1))
+  (return (= (call 'is-unit? pos) (const 'player-unit))))
 
 (func is-ennemy-unit? (pos) =>
-  (return 0))
+  (return (= (call 'is-unit? pos) (const 'ennemy-unit))))
 
 (func is-blocking-tile? (pos) =>
   (return 0))

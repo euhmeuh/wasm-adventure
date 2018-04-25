@@ -20,6 +20,7 @@
          mem
          data-section
          for
+         break
          (rename-out (add +))
          (rename-out (sub -))
          (rename-out (mul *))
@@ -121,6 +122,9 @@
        (set_local ,($ counter)
          ,(add counter step))
        (br $loop))))
+
+(define (break)
+  '(br $done))
 
 (define (eq x y)
   `(i32.eq ,(var x) ,(var y)))
