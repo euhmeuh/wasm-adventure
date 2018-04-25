@@ -361,6 +361,26 @@
                 (+ (call 'tile-y pos) 8)
                 (mem 'ui 'cursor-bot)))
 
+(func move-cursor-up ()
+  (locals pos)
+  (set-local pos (load-byte (mem 'game 'cursor-pos)))
+  (store-byte (mem 'game 'cursor-pos) (call 'row-up pos)))
+
+(func move-cursor-down ()
+  (locals pos)
+  (set-local pos (load-byte (mem 'game 'cursor-pos)))
+  (store-byte (mem 'game 'cursor-pos) (call 'row-down pos)))
+
+(func move-cursor-left ()
+  (locals pos)
+  (set-local pos (load-byte (mem 'game 'cursor-pos)))
+  (store-byte (mem 'game 'cursor-pos) (- pos 1)))
+
+(func move-cursor-right ()
+  (locals pos)
+  (set-local pos (load-byte (mem 'game 'cursor-pos)))
+  (store-byte (mem 'game 'cursor-pos) (+ pos 1)))
+
 (func hello ()
   (call 'log (mem 'messages) 12))
 
@@ -372,7 +392,14 @@
   (call 'show-cursor-bot))
 
 (func keydown (key)
-  (call 'log-num key))
+  (if (= key (const 'key-up))
+    (call 'move-cursor-up))
+  (if (= key (const 'key-down))
+    (call 'move-cursor-down))
+  (if (= key (const 'key-left))
+    (call 'move-cursor-left))
+  (if (= key (const 'key-right))
+    (call 'move-cursor-right)))
 
 ;;(func update (delta)
 ;;  todo)
