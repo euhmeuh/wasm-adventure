@@ -10,10 +10,12 @@
   'pixel-size 4
   'color-size 3
   'tile-size 258
-  'up 0
-  'down 1
-  'left 2
-  'right 3
+  'key-up 0
+  'key-down 1
+  'key-left 2
+  'key-right 3
+  'key-a 4
+  'key-b 5
   'board-offset-x 6
   'board-offset-y 22
   'board-width 13
@@ -369,11 +371,15 @@
   (call 'show-units (mem 'levels 'level1-player-units))
   (call 'show-cursor-bot))
 
+(func keydown (key)
+  (call 'log-num key))
+
 ;;(func update (delta)
 ;;  todo)
 
 (export "memory" (memory 0))
 (export "init" (func $init))
 (export "render" (func $render))
+(export "keydown" (func $keydown))
 ;;(export "update" (func $update))
 (export "hello" (func $hello))

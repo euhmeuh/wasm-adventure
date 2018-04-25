@@ -45,7 +45,7 @@
     </div>
     <script src="static/fpsctrl.js"></script>
     <script type="text/javascript">
-      function fetchAndInstantiate(url, importObject) {
+      function fetchAndInstantiate (url, importObject) {
         return fetch(url).then(response =>
           response.arrayBuffer()
         ).then(bytes =>
@@ -54,56 +54,92 @@
           results.instance
         );
       }
-    </script>
-    <script type="text/javascript">
-      let canvas = document.getElementById('screen-canvas');
-      if (canvas.getContext) {
-        init();
+
+      function find (collection, predicate) {
+        for (var i = 0; i < collection.length; i++) {
+          if (predicate(collection[i])) {
+            return collection[i];
+          }
+        }
       }
 
-      function init() {
-        let width = canvas.width;
-        let height = canvas.height;
-        let screenDataOffset = 8192;
-        let ctx = canvas.getContext('2d');
-        let instance;
-        let imageData;
-        let memory;
-        let importObject = {
-          console: {
-            log: function(offset, length) {
-              var bytes = new Uint8Array(memory.buffer, offset, length);
-              var string = new TextDecoder('utf8').decode(bytes);
-              console.log(string);
-            },
-            lognum: function(i) {
-              console.log(`Value: ${i}`);
-            }
+      let canvas = document.getElementById('screen-canvas');
+      let engine = null;
+      if (canvas.getContext) {
+        engine = init();
+        load(engine).then(() => {
+          initKeyboard(engine);
+        });
+      }
+
+      function init () {
+        let engine = {
+          width: canvas.width,
+          height: canvas.height,
+          screenDataOffset: 8192,
+          canvasCtx: canvas.getContext('2d'),
+          imageData: null,
+          memory: null,
+          instance: null,
+          importObject: {}
+        };
+        engine.importObject.console = {
+          log: function(offset, length) {
+            var bytes = new Uint8Array(engine.memory.buffer, offset, length);
+            var string = new TextDecoder('utf8').decode(bytes);
+            console.log(string);
+          },
+          lognum: function(i) {
+            console.log(`Value: ${i}`);
           }
         };
+        return engine;
+      }
 
-        fetchAndInstantiate('build/game.wasm', importObject)
-          .then((inst) => instance = inst)
-          .then(() => game())
+      function load (engine) {
+        return fetchAndInstantiate('build/game.wasm', engine.importObject)
+          .then((instance) => {
+            engine.instance = instance;
+            initGame(engine);
+          })
           .catch((err) => {
             console.log(err);
           });
+      }
 
-        function game() {
-          instance.exports.init(width, height);
-          memory = instance.exports.memory;
-          imageData = new ImageData(new Uint8ClampedArray(memory.buffer, screenDataOffset, width*height*4), width, height)
+      function initGame (engine) {
+        engine.instance.exports.init(engine.width, engine.height);
+        engine.memory = engine.instance.exports.memory;
+        engine.imageData = new ImageData(new Uint8ClampedArray(engine.memory.buffer,
+                                                               engine.screenDataOffset,
+                                                               engine.width*engine.height*4),
+                                                               engine.width,
+                                                               engine.height);
+        engine.instance.exports.hello();
 
-          instance.exports.hello();
+        let fc = new FpsCtrl(30, (e) => {
+          engine.instance.exports.render();
+          engine.canvasCtx.putImageData(engine.imageData, 0, 0);
+          //engine.instance.exports.update(e.delta);
+        });
+        fc.start();
+      }
 
-          let fc = new FpsCtrl(30, (e) => {
-            instance.exports.render();
-            ctx.putImageData(imageData, 0, 0);
-            instance.exports.update(e.delta);
-          });
-
-          fc.start();
-        }
+      function initKeyboard (engine) {
+        let keyCodes = [
+          { val: 38, game: 0 }, // up
+          { val: 40, game: 1 }, // down
+          { val: 37, game: 2 }, // left
+          { val: 39, game: 3 }, // right
+          { val: 65, game: 4 }, // a
+          { val: 66, game: 5 }, // b
+        ]
+        document.addEventListener('keydown', function(event) {
+          let key = find(keyCodes, (k) => k.val == event.keyCode);
+          if (key) {
+            engine.instance.exports.keydown(key.game);
+          }
+        });
       }
     </script>
   </body>
