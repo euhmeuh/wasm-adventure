@@ -19,7 +19,8 @@
   'board-offset-x 6
   'board-offset-y 22
   'board-width 13
-  'board-height 11)
+  'board-height 11
+  'no-selection #xFF)
 
 (data
   '(width 0 0)
@@ -44,7 +45,7 @@
      peach       #xFFCCAA
      black       #x000000))
   '(messages 256 "Hello world!")
-  '(tiles 1024 (memstring 1
+  '(tiles 512 (memstring 1
      start
      grass 16 16
       3  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3
@@ -132,7 +133,7 @@
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
     ))
-  '(units 2314 (memstring 1
+  '(units 2048 (memstring 1
      soldier0 16 32
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
@@ -200,7 +201,7 @@
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
      ))
-  '(ui 5398 (memstring 1
+  '(ui 5120 (memstring 1
      cursor-top 20 10
       0  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  0
       7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7
@@ -223,8 +224,30 @@
       7  0  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  0  7
       7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7
       0  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  0
+     cursor-top-selected 20 10
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0 14 14 14 14 14 14 14 14 14 14 14 14 14 14 14 14  0  0
+      0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
+      0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
+      0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
+      0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
+      0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
+      0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
+      0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
+    cursor-bot-selected 20 10
+      0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
+      0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
+      0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
+      0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
+      0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
+      0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
+      0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
+      0  0 14 14 14 14 14 14 14 14 14 14 14 14 14 14 14 14  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
      ))
-  '(levels 6144 (memstring 1
+  '(levels 7189 (memstring 1
      level1
      ;; grass 0
      ;; water 1
@@ -246,11 +269,12 @@
      level1-ennemy-units
      52 0 74 2 88 1 89 1 104 0 #xFF #xFF
      ))
-  '(game 7876 (memstring 1
+  '(game 8192 (memstring 1
      coins 0
      level 0
-     cursor-pos 66))
-  '(screen 8192 0))
+     cursor-pos 66
+     selection #xFF))
+  '(screen 10240 0))
 
 (func fill-pixels (pos len step color)
   (for pos len step
@@ -352,14 +376,18 @@
   (set-local pos (load-byte (mem 'game 'cursor-pos)))
   (call 'sprite (- (call 'tile-x pos) 2)
                 (- (call 'tile-y pos) 2)
-                (mem 'ui 'cursor-top)))
+                (if (call 'has-selection?) =>
+                  (then (mem 'ui 'cursor-top-selected))
+                  (else (mem 'ui 'cursor-top)))))
 
 (func show-cursor-bot ()
   (locals pos)
   (set-local pos (load-byte (mem 'game 'cursor-pos)))
   (call 'sprite (- (call 'tile-x pos) 2)
                 (+ (call 'tile-y pos) 8)
-                (mem 'ui 'cursor-bot)))
+                (if (call 'has-selection?) =>
+                  (then (mem 'ui 'cursor-bot-selected))
+                  (else (mem 'ui 'cursor-bot)))))
 
 (func move-cursor-up ()
   (locals pos)
@@ -381,6 +409,58 @@
   (set-local pos (load-byte (mem 'game 'cursor-pos)))
   (store-byte (mem 'game 'cursor-pos) (+ pos 1)))
 
+(func has-selection? () =>
+  (return (!= (load-byte (mem 'game 'selection))
+              (const 'no-selection))))
+
+(func is-selection? (pos) =>
+  (return (= pos (load-byte (mem 'game 'selection)))))
+
+(func is-unit? (pos) =>
+  (return 1))
+
+(func is-player-unit? (pos) =>
+  (return 1))
+
+(func is-ennemy-unit? (pos) =>
+  (return 0))
+
+(func is-blocking-tile? (pos) =>
+  (return 0))
+
+(func within-distance? (max) =>
+  (return 1))
+
+(func enter ()
+  (locals pos)
+  (set-local pos (load-byte (mem 'game 'cursor-pos)))
+  (if (call 'has-selection?)
+    (then
+      (if (call 'is-unit? pos)
+        (then
+          (if (call 'is-selection? pos)
+            (then (call 'upgrade))
+            (else (if (and (call 'is-ennemy-unit? pos)
+                           (call 'within-distance? 1))
+                    (call 'attack pos)))))
+        (else
+          (if (and (not (call 'is-blocking-tile? pos))
+                   (call 'within-distance? 3))
+            (call 'move pos)))))
+    (else
+      (if (call 'is-player-unit? pos)
+        (call 'select pos)))))
+
+(func select (pos)
+  (store-byte (mem 'game 'selection) pos))
+
+(func cancel ()
+  (store-byte (mem 'game 'selection) (const 'no-selection)))
+
+(func move (pos))
+(func attack (pos))
+(func upgrade ())
+
 (func hello ()
   (call 'log (mem 'messages) 12))
 
@@ -399,7 +479,11 @@
   (if (= key (const 'key-left))
     (call 'move-cursor-left))
   (if (= key (const 'key-right))
-    (call 'move-cursor-right)))
+    (call 'move-cursor-right))
+  (if (= key (const 'key-a))
+    (call 'enter))
+  (if (= key (const 'key-b))
+    (call 'cancel)))
 
 ;;(func update (delta)
 ;;  todo)
