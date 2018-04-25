@@ -198,6 +198,30 @@
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
      ))
+  '(ui 5398 (memstring 1
+     cursor-top 20 10
+      0  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  0
+      7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7
+      7  0  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  0  7
+      7  0  7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7  0  7
+      7  0  7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7  0  7
+      7  0  7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7  0  7
+      7  0  7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7  0  7
+      7  0  7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7  0  7
+      7  0  7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7  0  7
+      7  0  7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7  0  7
+    cursor-bot 20 10
+      7  0  7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7  0  7
+      7  0  7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7  0  7
+      7  0  7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7  0  7
+      7  0  7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7  0  7
+      7  0  7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7  0  7
+      7  0  7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7  0  7
+      7  0  7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7  0  7
+      7  0  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  0  7
+      7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7
+      0  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  0
+     ))
   '(levels 6144 (memstring 1
      level1
      ;; grass 0
@@ -222,29 +246,30 @@
      ))
   '(game 7876 (memstring 1
      coins 0
-     level 0))
+     level 0
+     cursor-pos 66))
   '(screen 8192 0))
 
-(func fill_pixels (pos len step color)
+(func fill-pixels (pos len step color)
   (for pos len step
     (call 'pixel pos color)))
 
-(func fill_row (row color)
+(func fill-row (row color)
   ;;; fill a full row of the screen with the given color
   (locals i len)
   (set-local i (* (load (mem 'width)) row))
   (set-local len (+ (load (mem 'width)) i))
-  (call 'fill_pixels i len 1 color))
+  (call 'fill-pixels i len 1 color))
 
-(func fill_col (col color)
+(func fill-col (col color)
   ;;; fill a full column of the screen with the given color
   (locals len)
   (set-local len (* (load (mem 'width)) (load (mem 'height))))
-  (call 'fill_pixels col len (load (mem 'width)) color))
+  (call 'fill-pixels col len (load (mem 'width)) color))
 
-(func fill_screen (color)
+(func fill-screen (color)
   ;;; fill the whole screen with a color
-  (call 'fill_pixels 0 (* (load (mem 'width)) (load (mem 'height))) 1 color))
+  (call 'fill-pixels 0 (* (load (mem 'width)) (load (mem 'height))) 1 color))
 
 (func pixel (pos color)
   ;;; draw a pixel at the given position in memory with the given color
@@ -285,40 +310,64 @@
   '(drop))
 
 ;; get tile x position on screen based on the tile index
-(func tile_x (i) =>
-  (return (+ (const 'board-offset-x) (* i 16))))
+(func tile-x (i) =>
+  (return (+ (const 'board-offset-x) (* (% i (const 'board-width)) 16))))
 
 ;; get tile y position on screen based on the tile index
-(func tile_y (i) =>
-  (return (+ (const 'board-offset-y) (* i 16))))
+(func tile-y (i) =>
+  (return (+ (const 'board-offset-y) (* (/ i (const 'board-width)) 16))))
 
-(func show_level (level)
+(func row-up (pos) =>
+  (return (- pos (const 'board-width))))
+
+(func row-down (pos) =>
+  (return (+ pos (const 'board-width))))
+
+(func show-level (level)
   (locals i tile)
   (set-local i 0)
   (set-local tile 0)
   (for i (* (const 'board-width) (const 'board-height)) 1
     (set-local tile (load-byte (+ level i)))
-    (call 'sprite (call 'tile_x (% i (const 'board-width)))
-                  (call 'tile_y (/ i (const 'board-width)))
+    (call 'sprite (call 'tile-x i)
+                  (call 'tile-y i)
                   (+ (mem 'tiles 'start) (* (const 'tile-size) tile)))))
 
-(func show_units (unit_list)
+(func show-units (unit-list)
   (locals pos level)
   ;; TODO
-  (call 'sprite (call 'tile_x 3)
-                (call 'tile_y 4)
+  (set-local pos 81)
+  (call 'sprite (call 'tile-x pos)
+                (call 'tile-y (call 'row-up pos))
                 (mem 'units 'soldier0))
-  (call 'sprite (call 'tile_x 1)
-                (call 'tile_y 3)
+  (set-local pos 66)
+  (call 'sprite (call 'tile-x pos)
+                (call 'tile-y (call 'row-up pos))
                 (mem 'units 'soldier1)))
+
+(func show-cursor-top ()
+  (locals pos)
+  (set-local pos (load-byte (mem 'game 'cursor-pos)))
+  (call 'sprite (- (call 'tile-x pos) 2)
+                (- (call 'tile-y pos) 2)
+                (mem 'ui 'cursor-top)))
+
+(func show-cursor-bot ()
+  (locals pos)
+  (set-local pos (load-byte (mem 'game 'cursor-pos)))
+  (call 'sprite (- (call 'tile-x pos) 2)
+                (+ (call 'tile-y pos) 8)
+                (mem 'ui 'cursor-bot)))
 
 (func hello ()
   (call 'log (mem 'messages) 12))
 
 (func render ()
-  (call 'fill_screen (mem 'palette 'black))
-  (call 'show_level (mem 'levels 'level1))
-  (call 'show_units (mem 'levels 'level1-player-units)))
+  (call 'fill-screen (mem 'palette 'black))
+  (call 'show-level (mem 'levels 'level1))
+  (call 'show-cursor-top)
+  (call 'show-units (mem 'levels 'level1-player-units))
+  (call 'show-cursor-bot))
 
 ;;(func update (delta)
 ;;  todo)
