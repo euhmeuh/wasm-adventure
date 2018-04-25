@@ -23,7 +23,8 @@
   'no-selection #xFF
   'max-units 143
   'player-unit 1
-  'ennemy-unit 2)
+  'ennemy-unit 2
+  'move-pile-len 8)
 
 (data
   '(width 0 0)
@@ -249,6 +250,23 @@
       0  0 14 14 14 14 14 14 14 14 14 14 14 14 14 14 14 14  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+    move 16 16
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0 14 14 14 14  0  0  0  0  0  0
+      0  0  0  0  0 14  0  0  0  0 14  0  0  0  0  0
+      0  0  0  0 14  0  0 14 14  0  0 14  0  0  0  0
+      0  0  0 14  0  0 14 14 14 14  0  0 14  0  0  0
+      0  0  0 14  0 14 14 14 14 14 14  0 14  0  0  0
+      0  0  0 14  0 14 14 14 14 14 14  0 14  0  0  0
+      0  0  0 14  0  0 14 14 14 14  0  0 14  0  0  0
+      0  0  0  0 14  0  0 14 14  0  0 14  0  0  0  0
+      0  0  0  0  0 14  0  0  0  0 14  0  0  0  0  0
+      0  0  0  0  0  0 14 14 14 14  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
      ))
   '(levels 7189 (memstring 1
      level1
@@ -270,13 +288,14 @@
      level1-player-units
      66 1 78 0 81 0 104 0 #xFF #xFF
      level1-ennemy-units
-     52 0 74 2 88 1 89 1 104 0 #xFF #xFF
+     51 0 74 2 88 1 89 1 104 0 #xFF #xFF
      ))
   '(game 8192 (memstring 1
      coins 0
      level 0
      cursor-pos 66
-     selection #xFF))
+     selection #xFF
+     move-pile #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF))
   '(screen 10240 0))
 
 (func fill-pixels (pos len step color)
@@ -363,16 +382,15 @@
                   (+ (mem 'tiles 'start) (* (const 'tile-size) tile)))))
 
 (func show-units (unit-list)
-  (locals pos level)
-  ;; TODO
-  (set-local pos 81)
-  (call 'sprite (call 'tile-x pos)
-                (call 'tile-y (call 'row-up pos))
-                (mem 'units 'soldier0))
-  (set-local pos 66)
-  (call 'sprite (call 'tile-x pos)
-                (call 'tile-y (call 'row-up pos))
-                (mem 'units 'soldier1)))
+  (locals i pos level)
+  (set-local i 0)
+  (for i (* 2 (const 'max-units)) 2
+    (set-local pos (load-byte (+ unit-list i)))
+    (set-local level (load-byte (+ unit-list (+ 1 i))))
+    (if (= pos #xFF) (break))
+    (call 'sprite (call 'tile-x pos)
+                  (call 'tile-y (call 'row-up pos))
+                  (mem 'units 'soldier0))))
 
 (func show-cursor-top ()
   (locals pos)
@@ -392,25 +410,56 @@
                   (then (mem 'ui 'cursor-bot-selected))
                   (else (mem 'ui 'cursor-bot)))))
 
+(func show-path ()
+  (locals i move)
+  (set-local i 0)
+  (for i (const 'move-pile-len) 1
+    (set-local move (load-byte (+ (mem 'game 'move-pile) i)))
+    (if (= move #xFF) (break))
+    (call 'sprite (call 'tile-x move)
+                  (call 'tile-y move)
+                  (mem 'ui 'move))))
+
 (func move-cursor-up ()
   (locals pos)
-  (set-local pos (load-byte (mem 'game 'cursor-pos)))
-  (store-byte (mem 'game 'cursor-pos) (call 'row-up pos)))
+  (set-local pos (call 'row-up (load-byte (mem 'game 'cursor-pos))))
+  (store-byte (mem 'game 'cursor-pos) pos)
+  (call 'update-move-pile pos))
 
 (func move-cursor-down ()
   (locals pos)
-  (set-local pos (load-byte (mem 'game 'cursor-pos)))
-  (store-byte (mem 'game 'cursor-pos) (call 'row-down pos)))
+  (set-local pos (call 'row-down (load-byte (mem 'game 'cursor-pos))))
+  (store-byte (mem 'game 'cursor-pos) pos)
+  (call 'update-move-pile pos))
 
 (func move-cursor-left ()
   (locals pos)
-  (set-local pos (load-byte (mem 'game 'cursor-pos)))
-  (store-byte (mem 'game 'cursor-pos) (- pos 1)))
+  (set-local pos (- (load-byte (mem 'game 'cursor-pos)) 1))
+  (store-byte (mem 'game 'cursor-pos) pos)
+  (call 'update-move-pile pos))
 
 (func move-cursor-right ()
   (locals pos)
-  (set-local pos (load-byte (mem 'game 'cursor-pos)))
-  (store-byte (mem 'game 'cursor-pos) (+ pos 1)))
+  (set-local pos (+ (load-byte (mem 'game 'cursor-pos)) 1))
+  (store-byte (mem 'game 'cursor-pos) pos)
+  (call 'update-move-pile pos))
+
+(func update-move-pile (pos)
+  (locals i move erase-mode)
+  (set-local i 0)
+  (set-local erase-mode 0)
+  (if (call 'has-selection?)
+    (for i (const 'move-pile-len) 1
+      (if erase-mode
+        (then ;; we erase until the end of the pile
+          (store-byte (+ (mem 'game 'move-pile) i) #xFF))
+        (else
+          (set-local move (load-byte (+ (mem 'game 'move-pile) i)))
+          (if (= move #xFF) ;; we can add to the pile
+            (store-byte (+ (mem 'game 'move-pile) i) pos)
+            (break))
+          (if (= move pos) ;; we went back to an already visited tile
+            (set-local erase-mode 1)))))))
 
 (func has-selection? () =>
   (return (!= (load-byte (mem 'game 'selection))
@@ -457,10 +506,17 @@
   (return (= (call 'is-unit? pos) (const 'ennemy-unit))))
 
 (func is-blocking-tile? (pos) =>
-  (return 0))
+  (locals tile)
+  (set-local tile (load-byte (+ (call 'current-level) pos)))
+  (return (or (= tile 1) ;; water
+              (or (= tile 3) ;; pit
+                  (= tile 4)) ;; pit 2
+              )))
 
+;; check if the cursor is too far from the selection or not
 (func within-distance? (max) =>
-  (return 1))
+  (return (= (load-byte (+ (mem 'game 'move-pile) max))
+             #xFF)))
 
 (func enter ()
   (locals pos)
@@ -486,11 +542,19 @@
   (store-byte (mem 'game 'selection) pos))
 
 (func cancel ()
-  (store-byte (mem 'game 'selection) (const 'no-selection)))
+  (store-byte (mem 'game 'selection) (const 'no-selection))
+  ;; reset move-pile
+  (store (mem 'game 'move-pile) #xFFFFFFFF)
+  (store (+ 4 (mem 'game 'move-pile)) #xFFFFFFFF))
 
-(func move (pos))
-(func attack (pos))
-(func upgrade ())
+(func move (pos)
+  (call 'log-num 1010))
+
+(func attack (pos)
+  (call 'log-num 6666))
+
+(func upgrade ()
+  (call 'log-num 1234))
 
 (func hello ()
   (call 'log (mem 'messages) 12))
@@ -500,7 +564,9 @@
   (call 'show-level (mem 'levels 'level1))
   (call 'show-cursor-top)
   (call 'show-units (mem 'levels 'level1-player-units))
-  (call 'show-cursor-bot))
+  (call 'show-units (mem 'levels 'level1-ennemy-units))
+  (call 'show-cursor-bot)
+  (call 'show-path))
 
 (func keydown (key)
   (if (= key (const 'key-up))
