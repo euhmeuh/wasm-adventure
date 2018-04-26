@@ -146,7 +146,8 @@
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
     ))
-  '(units 2048 (memstring 1
+  '(units 1803 (memstring 1
+     start
      soldier0 16 32
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
@@ -246,8 +247,107 @@
       0  0  6  6  0  0  0  0  6  6  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+     ennemy0 16 32
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  6  6  6  6  6  6  0  0  0
+      0  0  6  0  0  0  6  6  6  6  6  7  6  6  0  0
+      0  0  6  7  0  0  4  4  4  4  6  6  7  6  0  0
+      0  0  6  7  0  0 15 15 15 15  4  6  7  6  0  0
+      0  0  6  7  0  0 15 15  9 15  4  6  6  6  0  0
+      0  0  6  7  0  0 15 15 15 15  4  6  6  6  0  0
+      0  0  6  7  0  0 15 15 15 15 15  6  6  0  0  0
+      0  0  6  7  0  0 13 13  6  6  6  6 13 13  0  0
+      0  6  6  6  6  0 13 13 13 13 13 13 13 13  0  0
+      0  0  4  4  5  5  5  5  5  5  5  5  5  5  0  0
+      0  0  4  4  5  5  5  5  5  5  5  5  5  5  0  0
+      0  0  4  4  5  5  5  5  5  5  5  5  5  5  0  0
+      0  0  0  0  0  0  5  5  5  5  5  5  5  5  0  0
+      0  0  0  0  0  0  6  6  6  6  6  6  6  6  0  0
+      0  0  0  0  0  0  6  6  6  0  0  6  6  6  0  0
+      0  0  0  0  0  0  6  6  0  0  0  0  6  6  0  0
+      0  0  0  0  0  0  6  6  0  0  0  0  6  6  0  0
+      0  0  0  0  0  0  6  6  0  0  0  0  6  6  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+     ennemy1 16 32
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  8  8  8  8  0  0  0  0
+      0  0  0  0  0  0  0  0  8  8  8  8  0  0  0  0
+      0  0  0  0  0  0  0  0  6  6  6  6  0  0  0  0
+      0  0  0  0  0  0  6  0  0  6  6  0  0  6  0  0
+      0  6  6  0  0  0  6  6  6  6  6  6  6  6  0  0
+      6  6  0  0  0  0  6  6  6  6  6  7  6  6  0  0
+      6  6  6  4  4  0  6  4  4  4  6  6  7  6  0  0
+      6  6  6  6  6  0  6  4 15 15  4  6  7  6  0  0
+      6  6  6  6  6  0  4 15  9 15  4  6  6  6  0  0
+      6  6  6  4  4  0 15 15 15 15  4  6  6  6  0  0
+      6  6  0  4  4 13 15 15 15 15 15  6  6 13 13  0
+      0  6  6  4  4 13 13 13  6  6  6  6 13 13 13  0
+      0  0  0  4  4 13 13 13 13 13 13 13 13 13 13  0
+      0  0  0  4  4  5  5 13  5  5  5 13  5  5  0  0
+      0  0  0  4  4  5  5  5  5  5  5  5  5  5  0  0
+      0  0  0  4  4  5  5  5  5  5  5  5  5  5  0  0
+      0  0  0  0  0  0  5  5  5  5  5  5  5  5  0  0
+      0  0  0  0  0  0  6  6  6  6  6  6  6  6  0  0
+      0  0  0  0  0  0  6  6  6  0  0  6  6  6  0  0
+      0  0  0  0  0  0  6  6  0  0  0  0  6  6  0  0
+      0  0  0  0  0  0  6  6  0  0  0  0  6  6  0  0
+      0  0  0  0  0  0  6  6  0  0  0  0  6  6  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+     ennemy2 16 32
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  7  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  6  7  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  6  6  0  0  0  0  0
+      0  0  6  0  0  0  0  0  0  6  6  0  0  0  0  0
+      0  0  6  7  0  0  7  0  0  6  7  0  0  7  0  0
+      0  0  6  7  0  0  6  0  6  6  6  7  0  6  0  0
+      0  0  6  7  0  0  6  6  6  6  6  6  6  6  0  0
+      0  0  6  7  0  0  6  6  6  6  6  7  6  6  0  0
+      0  0  6  7  0  0  6  4  4  4  6  6  7  6  0  0
+      0  0  6  7  0  0  6  4 15 15  4  6  7  6  0  0
+      0  0  6  7  0  0  4 15  9 15  4  6  6  6  0  0
+      0  0  6  7  0  0 15 15 15 15  4  6  6  6  0  0
+      0  0  6  7  0 13 15 15 15 15 15  6  6 13 13  0
+      0  0  6  7  0 13 13 13  6  6  6  6 13 13 13  0
+      6  0  6  7  0  6 13 13 13 13 13 13 13 13 13  0
+      6  6  6  6  6  6  5 13 13 13 13 13  5  5  8  0
+      0  0  7  6  5  5 13  5 13 13 13  5 13  5  8  0
+      0  0  6  7  5  5  5 13  5 13  5 13  5  5  8  0
+      0  0  7  6  0  8  5  5  5  5  5  5  5  5  8  0
+      0  0  0  0  0  8  6  6  6  6  6  6  6  6  8  0
+      0  0  0  0  0  8  6  6  6  8  8  6  6  6  8  0
+      0  0  0  0  0  8  6  6  8  8  8  8  6  6  8  0
+      0  0  0  0  0  8  6  6  8  8  8  8  6  6  8  0
+      0  0  0  0  0  0  6  6  0  0  0  0  6  6  0  0
+      0  0  0  0  0  0  6  6  0  0  0  0  6  6  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
      ))
-  '(ui 5120 (memstring 1
+  '(ui 4887 (memstring 1
      cursor-top 20 10
       0  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  0
       7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7
@@ -313,23 +413,23 @@
   '(actions 6500 (memstring 1
      start
      upgrade 8 8
-      0  0  0  1  1  0  0  0
-      0  0  1 12 12  1  0  0
-      0  1 12 12 12 12  1  0
-      1 12 12 12 12 12 12  1
-      1  1  1 12 12  1  1  1
-      0  0  1 12 12  1  0  0
-      0  0  1 12 12  1  0  0
-      0  0  1  1  1  1  0  0
+      0  0  0  7  7  0  0  0
+      0  0  7 12 12  7  0  0
+      0  7 12 12 12 12  7  0
+      7 12 12 12 12 12 12  7
+      7  7  7 12 12  7  7  7
+      0  0  7 12 12  7  0  0
+      0  0  7 12 12  7  0  0
+      0  0  7  7  7  7  0  0
      move 8 8
-      6  4  6  0  0  0  0  0
-      6  4  6  0  0  0  0  0
-      6  4  6  0  0  0  0  0
-      6  4  4  6  6  0  0  0
-      6  4  4  4  4  6  6  0
-      6  4  4  4  4  4  4  6
-      6  4  4  4  4  4  4  6
-      6  6  6  6  6  6  6  0
+      7  4  7  0  0  0  0  0
+      7  4  7  0  0  0  0  0
+      7  4  7  0  0  0  0  0
+      7  4  4  7  7  0  0  0
+      7  4  4  4  4  7  7  0
+      7  4  4  4  4  4  4  7
+      7  4  4  4  4  4  4  7
+      7  7  7  7  7  7  7  0
      attack 8 8
       0  0  0  0  0  0  7  6
       0  0  0  0  0  7  6  6
@@ -359,11 +459,11 @@
       0  4  4  4  4  4  4  0
      ))
   '(levels 7189 (memstring 1
-     level1
+     level0
      ;; grass 0
      ;; water 1
      ;; sand 2
-     ;; pit 3
+     ;; pit 3, 4
      2 2 2 2 2 2 2 2 2 3 2 0 0
      0 0 0 0 2 2 2 0 0 0 0 0 0
      0 0 0 0 0 0 0 0 0 0 0 0 0
@@ -375,18 +475,19 @@
      0 0 0 0 1 1 1 1 0 0 0 0 0
      3 3 0 0 1 1 1 1 1 2 2 0 3
      4 4 0 1 1 1 1 1 1 1 1 2 4
-     level1-player-units
+     ;; player units
      66 1 78 0 81 0 104 0 #xFF #xFF
-     level1-ennemy-units
-     51 0 74 2 88 1 89 1 104 0 #xFF #xFF
+     ;; ennemy units
+     51 0 74 2 88 1 89 1 103 0 #xFF #xFF
      ))
   '(game 8192 (memstring 1
      coins 0
-     level 0
      cursor-pos 66
      selection #xFF
      move-pile #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF
-     current-action #xFF))
+     current-action #xFF
+     current-level 0
+     current-units #xFF #xFF #xFF #xFF))
   '(screen 10240 0))
 
 (func fill-pixels (pos len step color)
@@ -446,7 +547,9 @@
   (store (mem 'height) height)
   `(grow_memory ,(/ (+ (mem 'screen) (* (const 'pixel-size) (* width height)))
                     (const 'page-size)))
-  '(drop))
+  '(drop)
+  ;; load first level
+  (call 'load-level (mem 'levels 'level0)))
 
 ;; get tile x position on screen based on the tile index
 (func tile-x (i) =>
@@ -472,17 +575,22 @@
                   (call 'tile-y i)
                   (+ (mem 'tiles 'start) (* (const 'tile-size) tile)))))
 
-(func show-units (unit-list)
-  (locals i pos level)
+(func show-current-units ()
+  (locals i pos level units ennemy?)
   (set-local i 0)
+  (set-local units (mem 'game 'current-units))
   (for i (* 2 (const 'max-units)) 2
-    (set-local pos (load-byte (+ unit-list i)))
-    (set-local level (load-byte (+ unit-list (+ 1 i))))
-    (if (= pos #xFF) (break))
+    (set-local pos (load-byte (+ units i)))
+    (set-local level (load-byte (+ units (+ 1 i))))
+    (if (and (= pos #xFF) ennemy?)
+      (break))
+    (if (and (= pos #xFF) (not ennemy?))
+      (set-local ennemy? 1))
     (call 'sprite (call 'tile-x pos)
                   (call 'tile-y (call 'row-up pos))
-                  (+ (mem 'units 'soldier0)
-                     (* level (const 'soldier-size))))))
+                  (+ (mem 'units 'start)
+                     (* (+ level (* 3 ennemy?))
+                        (const 'soldier-size))))))
 
 (func show-cursor-top ()
   (locals pos)
@@ -585,7 +693,8 @@
             (else (store-byte (mem 'game 'current-action) (const 'action-blocked)))))))
     (else
       (if (call 'is-player-unit? pos)
-        (store-byte (mem 'game 'current-action) (const 'action-select))))))
+        (then (store-byte (mem 'game 'current-action) (const 'action-select)))
+        (else (store-byte (mem 'game 'current-action) (const 'action-none)))))))
 
 (func has-selection? () =>
   (return (!= (load-byte (mem 'game 'selection))
@@ -596,21 +705,34 @@
 
 (func current-level () =>
   ;;(locals level)
-  ;;(set-local level (load-byte (mem 'game 'level)))
-  (return (mem 'levels 'level1)))
+  ;;(set-local level (load-byte (mem 'game 'current-level)))
+  (return (mem 'levels 'level0)))
 
-(func current-level-units () =>
-  (return (+ (call 'current-level)
-             (* (const 'board-width) (const 'board-height)))))
+(func level-units (level) =>
+  (return (+ level (* (const 'board-width) (const 'board-height)))))
+
+(func load-level (level)
+  (locals i units pos lvl ennemy?)
+  (set-local i 0)
+  (set-local units (call 'level-units level))
+  (set-local ennemy? 0)
+  (for i (* 2 (const 'max-units)) 2
+    (set-local pos (load-byte (+ units i)))
+    (set-local lvl (load-byte (+ 1 (+ units i))))
+    (store-byte (+ i (mem 'game 'current-units)) pos)
+    (store-byte (+ 1 (+ i (mem 'game 'current-units))) lvl)
+    (if (and (= pos #xFF) ennemy?)
+      (break))
+    (if (and (= pos #xFF) (not ennemy?))
+      (set-local ennemy? 1))))
 
 (func is-unit? (pos) =>
-  (locals i units unit ennemy? result)
+  (locals i unit ennemy? result)
   (set-local i 0)
   (set-local result 0)
   (set-local ennemy? 0)
-  (set-local units (call 'current-level-units))
   (for i (* 2 (const 'max-units)) 2
-    (set-local unit (load-byte (+ units i)))
+    (set-local unit (load-byte (+ (mem 'game 'current-units) i)))
     (if (= unit pos)
       (set-local result (if ennemy? =>
                           (then (const 'ennemy-unit))
@@ -683,8 +805,7 @@
   (call 'fill-screen (mem 'palette 'black))
   (call 'show-level (call 'current-level))
   (call 'show-cursor-top)
-  (call 'show-units (mem 'levels 'level1-player-units))
-  (call 'show-units (mem 'levels 'level1-ennemy-units))
+  (call 'show-current-units)
   (call 'show-cursor-bot)
   (call 'show-path)
   (call 'show-action))
