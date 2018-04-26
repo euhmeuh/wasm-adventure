@@ -627,8 +627,8 @@
            (and (!= current-action (const 'action-none))
                 (!= current-action (const 'action-select))))
     (set-local cursor-pos (load-byte (mem 'game 'cursor-pos)))
-    (call 'sprite (call 'tile-x cursor-pos)
-                  (call 'tile-y (call 'row-up cursor-pos))
+    (call 'sprite (+ 16 (call 'tile-x cursor-pos))
+                  (call 'tile-y (call 'row-down cursor-pos))
                   (+ (mem 'actions 'start)
                      (* current-action (const 'action-size))))))
 
