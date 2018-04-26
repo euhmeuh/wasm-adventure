@@ -650,7 +650,7 @@
 (func move-cursor-left ()
   (locals pos)
   (set-local pos (load-byte (mem 'game 'cursor-pos)))
-  (if (> pos 0)
+  (if (> (% pos (const 'board-width)) 0)
     (set-local pos (- pos 1))
     (store-byte (mem 'game 'cursor-pos) pos)
     (call 'update-move-pile pos)))
@@ -658,7 +658,7 @@
 (func move-cursor-right ()
   (locals pos)
   (set-local pos (+ (load-byte (mem 'game 'cursor-pos)) 1))
-  (if (< pos (const 'board-size))
+  (if (> (% pos (const 'board-width)) 0)
     (store-byte (mem 'game 'cursor-pos) pos)
     (call 'update-move-pile pos)))
 
@@ -708,6 +708,21 @@
 
 (func is-selection? (pos) =>
   (return (= pos (load-byte (mem 'game 'selection)))))
+
+(func selected-unit () =>
+  (locals i addr unit selection result)
+  (set-local i 0)
+  (set-local result 0)
+  (set-local selection (load-byte (mem 'game 'selection)))
+  (if (!= selection (const 'no-selection))
+    (for i (* 2 (const 'board-size)) 2
+      (set-local addr (+ (mem 'game 'current-units) i))
+      (set-local unit (load-byte addr))
+      (if (= unit selection)
+        (set-local result addr)
+        (break))
+      (if (= unit #xFF) (break))))
+  (return result))
 
 (func current-level () =>
   ;;(locals level)
@@ -796,7 +811,8 @@
   (store (+ 4 (mem 'game 'move-pile)) #xFFFFFFFF))
 
 (func move (pos)
-  (call 'log-num 1010))
+  (store-byte (call 'selected-unit) pos)
+  (call 'cancel))
 
 (func attack (pos)
   (call 'log-num 6666))
