@@ -481,7 +481,7 @@
      51 0 74 2 88 1 89 1 103 0 #xFF #xFF
      ))
   '(game 8192 (memstring 1
-     coins 0
+     coins 10
      cursor-pos 66
      selection #xFF
      move-pile #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF
@@ -818,7 +818,14 @@
   (call 'log-num 6666))
 
 (func upgrade ()
-  (call 'log-num 1234))
+  (locals coins lvl-addr lvl)
+  (set-local coins (load-byte (mem 'game 'coins)))
+  (set-local lvl-addr (+ 1 (call 'selected-unit)))
+  (set-local lvl (load-byte lvl-addr))
+  (if (and (> coins 0) (< lvl 2))
+    (store-byte lvl-addr (+ 1 lvl))
+    (store-byte (mem 'game 'coins) (- coins 1)))
+  (call 'cancel))
 
 (func hello ()
   (call 'log (mem 'messages) 12))
