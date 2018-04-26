@@ -11,6 +11,7 @@
   'color-size 3
   'tile-size 258
   'soldier-size 514
+  'action-size 66
   'key-up 0
   'key-down 1
   'key-left 2
@@ -25,7 +26,14 @@
   'max-units 143
   'player-unit 1
   'ennemy-unit 2
-  'move-pile-len 8)
+  'move-pile-len 8
+  'action-upgrade 0
+  'action-move 1
+  'action-attack 2
+  'action-blocked 3
+  'action-wait 4
+  'action-select 5
+  'action-none #xFF)
 
 (data
   '(width 0 0)
@@ -172,7 +180,7 @@
       0  0  6  6  0  0  0  0  6  6  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-    soldier1 16 32
+     soldier1 16 32
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
@@ -205,7 +213,7 @@
       0  0  6  6  0  0  0  0  6  6  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-    soldier2 16 32
+     soldier2 16 32
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
@@ -251,7 +259,7 @@
       7  0  7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7  0  7
       7  0  7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7  0  7
       7  0  7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7  0  7
-    cursor-bot 20 10
+     cursor-bot 20 10
       7  0  7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7  0  7
       7  0  7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7  0  7
       7  0  7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7  0  7
@@ -263,9 +271,9 @@
       7  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  7
       0  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  7  0
      cursor-top-selected 20 10
-      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-      0  0 14 14 14 14 14 14 14 14 14 14 14 14 14 14 14 14  0  0
+     14 14 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14 14 14
+     14  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14
+     14  0 14 14 14 14 14 14 14 14 14 14 14 14 14 14 14 14  0 14
       0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
       0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
       0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
@@ -273,7 +281,7 @@
       0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
       0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
       0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
-    cursor-bot-selected 20 10
+     cursor-bot-selected 20 10
       0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
       0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
       0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
@@ -281,10 +289,10 @@
       0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
       0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
       0  0 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14  0  0
-      0  0 14 14 14 14 14 14 14 14 14 14 14 14 14 14 14 14  0  0
-      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-    move 16 16
+     14  0 14 14 14 14 14 14 14 14 14 14 14 14 14 14 14 14  0 14
+     14  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14
+     14 14 14  0  0  0  0  0  0  0  0  0  0  0  0  0  0 14 14 14
+     move-indicator 16 16
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
@@ -301,6 +309,54 @@
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+     ))
+  '(actions 6500 (memstring 1
+     start
+     upgrade 8 8
+      0  0  0  1  1  0  0  0
+      0  0  1 12 12  1  0  0
+      0  1 12 12 12 12  1  0
+      1 12 12 12 12 12 12  1
+      1  1  1 12 12  1  1  1
+      0  0  1 12 12  1  0  0
+      0  0  1 12 12  1  0  0
+      0  0  1  1  1  1  0  0
+     move 8 8
+      6  4  6  0  0  0  0  0
+      6  4  6  0  0  0  0  0
+      6  4  6  0  0  0  0  0
+      6  4  4  6  6  0  0  0
+      6  4  4  4  4  6  6  0
+      6  4  4  4  4  4  4  6
+      6  4  4  4  4  4  4  6
+      6  6  6  6  6  6  6  0
+     attack 8 8
+      0  0  0  0  0  0  7  6
+      0  0  0  0  0  7  6  6
+      0  0  0  0  7  6  6  0
+      6  0  0  7  6  6  0  0
+      0  6  6  6  6  0  0  0
+      0  4  6  6  0  0  0  0
+      4  4  4  6  0  0  0  0
+      4  4  0  0  6  0  0  0
+     blocked 8 8
+      8  8  0  0  0  0  8  8
+      8  8  8  0  0  8  8  8
+      0  8  8  8  8  8  8  0
+      0  0  8  8  8  8  0  0
+      0  0  8  8  8  8  0  0
+      0  8  8  8  8  8  8  0
+      8  8  8  0  0  8  8  8
+      8  8  0  0  0  0  8  8
+     wait 8 8
+      0  4  4  4  4  4  4  0
+      0  4  0  0  0  0  4  0
+      0  0  4  0  0  4  0  0
+      0  0  0  4  4  0  0  0
+      0  0  4  0  0  4  0  0
+      0  0  4 15 15  4  0  0
+      0  4 15 15 15 15  4  0
+      0  4  4  4  4  4  4  0
      ))
   '(levels 7189 (memstring 1
      level1
@@ -329,7 +385,8 @@
      level 0
      cursor-pos 66
      selection #xFF
-     move-pile #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF))
+     move-pile #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF
+     current-action #xFF))
   '(screen 10240 0))
 
 (func fill-pixels (pos len step color)
@@ -453,7 +510,19 @@
     (if (= move #xFF) (break))
     (call 'sprite (call 'tile-x move)
                   (call 'tile-y move)
-                  (mem 'ui 'move))))
+                  (mem 'ui 'move-indicator))))
+
+(func show-action ()
+  (locals cursor-pos current-action)
+  (set-local current-action (load-byte (mem 'game 'current-action)))
+  (if (and (call 'has-selection?)
+           (and (!= current-action (const 'action-none))
+                (!= current-action (const 'action-select))))
+    (set-local cursor-pos (load-byte (mem 'game 'cursor-pos)))
+    (call 'sprite (call 'tile-x cursor-pos)
+                  (call 'tile-y (call 'row-up cursor-pos))
+                  (+ (mem 'actions 'start)
+                     (* current-action (const 'action-size))))))
 
 (func move-cursor-up ()
   (locals pos)
@@ -495,6 +564,28 @@
             (break))
           (if (= move pos) ;; we went back to an already visited tile
             (set-local erase-mode 1)))))))
+
+(func update-action ()
+  (locals pos)
+  (set-local pos (load-byte (mem 'game 'cursor-pos)))
+  (if (call 'has-selection?)
+    (then
+      (if (call 'is-unit? pos)
+        (then
+          (if (call 'is-selection? pos)
+            (then (store-byte (mem 'game 'current-action) (const 'action-upgrade)))
+            (else (if (and (call 'is-ennemy-unit? pos)
+                           (call 'within-distance? 1))
+                    (then (store-byte (mem 'game 'current-action) (const 'action-attack)))
+                    (else (store-byte (mem 'game 'current-action) (const 'action-blocked)))))))
+        (else
+          (if (and (not (call 'is-blocking-tile? pos))
+                   (call 'within-distance? 3))
+            (then (store-byte (mem 'game 'current-action) (const 'action-move)))
+            (else (store-byte (mem 'game 'current-action) (const 'action-blocked)))))))
+    (else
+      (if (call 'is-player-unit? pos)
+        (store-byte (mem 'game 'current-action) (const 'action-select))))))
 
 (func has-selection? () =>
   (return (!= (load-byte (mem 'game 'selection))
@@ -554,30 +645,24 @@
              #xFF)))
 
 (func enter ()
-  (locals pos)
-  (set-local pos (load-byte (mem 'game 'cursor-pos)))
-  (if (call 'has-selection?)
-    (then
-      (if (call 'is-unit? pos)
-        (then
-          (if (call 'is-selection? pos)
-            (then (call 'upgrade))
-            (else (if (and (call 'is-ennemy-unit? pos)
-                           (call 'within-distance? 1))
-                    (call 'attack pos)))))
-        (else
-          (if (and (not (call 'is-blocking-tile? pos))
-                   (call 'within-distance? 3))
-            (call 'move pos)))))
-    (else
-      (if (call 'is-player-unit? pos)
-        (call 'select pos)))))
+  (locals cursor-pos current-action)
+  (set-local cursor-pos (load-byte (mem 'game 'cursor-pos)))
+  (set-local current-action (load-byte (mem 'game 'current-action)))
+  (if (= current-action (const 'action-select))
+    (call 'select cursor-pos))
+  (if (= current-action (const 'action-move))
+    (call 'move cursor-pos))
+  (if (= current-action (const 'action-attack))
+    (call 'attack cursor-pos))
+  (if (= current-action (const 'action-upgrade))
+    (call 'upgrade)))
 
 (func select (pos)
   (store-byte (mem 'game 'selection) pos))
 
 (func cancel ()
   (store-byte (mem 'game 'selection) (const 'no-selection))
+  (store-byte (mem 'game 'current-action) (const 'action-none))
   ;; reset move-pile
   (store (mem 'game 'move-pile) #xFFFFFFFF)
   (store (+ 4 (mem 'game 'move-pile)) #xFFFFFFFF))
@@ -601,7 +686,8 @@
   (call 'show-units (mem 'levels 'level1-player-units))
   (call 'show-units (mem 'levels 'level1-ennemy-units))
   (call 'show-cursor-bot)
-  (call 'show-path))
+  (call 'show-path)
+  (call 'show-action))
 
 (func keydown (key)
   (if (= key (const 'key-up))
@@ -615,7 +701,8 @@
   (if (= key (const 'key-a))
     (call 'enter))
   (if (= key (const 'key-b))
-    (call 'cancel)))
+    (call 'cancel))
+  (call 'update-action))
 
 ;;(func update (delta)
 ;;  todo)
