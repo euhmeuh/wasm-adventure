@@ -22,8 +22,8 @@
   'board-offset-y 22
   'board-width 13
   'board-height 11
+  'board-size 143
   'no-selection #xFF
-  'max-units 143
   'player-unit 1
   'ennemy-unit 2
   'move-pile-len 8
@@ -569,7 +569,7 @@
   (locals i tile)
   (set-local i 0)
   (set-local tile 0)
-  (for i (* (const 'board-width) (const 'board-height)) 1
+  (for i (const 'board-size) 1
     (set-local tile (load-byte (+ level i)))
     (call 'sprite (call 'tile-x i)
                   (call 'tile-y i)
@@ -579,7 +579,7 @@
   (locals i pos level units ennemy?)
   (set-local i 0)
   (set-local units (mem 'game 'current-units))
-  (for i (* 2 (const 'max-units)) 2
+  (for i (* 2 (const 'board-size)) 2
     (set-local pos (load-byte (+ units i)))
     (set-local level (load-byte (+ units (+ 1 i))))
     (if (and (= pos #xFF) ennemy?)
@@ -634,27 +634,33 @@
 
 (func move-cursor-up ()
   (locals pos)
-  (set-local pos (call 'row-up (load-byte (mem 'game 'cursor-pos))))
-  (store-byte (mem 'game 'cursor-pos) pos)
-  (call 'update-move-pile pos))
+  (set-local pos (load-byte (mem 'game 'cursor-pos)))
+  (if (>= pos (const 'board-width))
+    (set-local pos (call 'row-up pos))
+    (store-byte (mem 'game 'cursor-pos) pos)
+    (call 'update-move-pile pos)))
 
 (func move-cursor-down ()
   (locals pos)
   (set-local pos (call 'row-down (load-byte (mem 'game 'cursor-pos))))
-  (store-byte (mem 'game 'cursor-pos) pos)
-  (call 'update-move-pile pos))
+  (if (< pos (const 'board-size))
+    (store-byte (mem 'game 'cursor-pos) pos)
+    (call 'update-move-pile pos)))
 
 (func move-cursor-left ()
   (locals pos)
-  (set-local pos (- (load-byte (mem 'game 'cursor-pos)) 1))
-  (store-byte (mem 'game 'cursor-pos) pos)
-  (call 'update-move-pile pos))
+  (set-local pos (load-byte (mem 'game 'cursor-pos)))
+  (if (> pos 0)
+    (set-local pos (- pos 1))
+    (store-byte (mem 'game 'cursor-pos) pos)
+    (call 'update-move-pile pos)))
 
 (func move-cursor-right ()
   (locals pos)
   (set-local pos (+ (load-byte (mem 'game 'cursor-pos)) 1))
-  (store-byte (mem 'game 'cursor-pos) pos)
-  (call 'update-move-pile pos))
+  (if (< pos (const 'board-size))
+    (store-byte (mem 'game 'cursor-pos) pos)
+    (call 'update-move-pile pos)))
 
 (func update-move-pile (pos)
   (locals i move erase-mode)
@@ -709,14 +715,14 @@
   (return (mem 'levels 'level0)))
 
 (func level-units (level) =>
-  (return (+ level (* (const 'board-width) (const 'board-height)))))
+  (return (+ level (const 'board-size))))
 
 (func load-level (level)
   (locals i units pos lvl ennemy?)
   (set-local i 0)
   (set-local units (call 'level-units level))
   (set-local ennemy? 0)
-  (for i (* 2 (const 'max-units)) 2
+  (for i (* 2 (const 'board-size)) 2
     (set-local pos (load-byte (+ units i)))
     (set-local lvl (load-byte (+ 1 (+ units i))))
     (store-byte (+ i (mem 'game 'current-units)) pos)
@@ -731,7 +737,7 @@
   (set-local i 0)
   (set-local result 0)
   (set-local ennemy? 0)
-  (for i (* 2 (const 'max-units)) 2
+  (for i (* 2 (const 'board-size)) 2
     (set-local unit (load-byte (+ (mem 'game 'current-units) i)))
     (if (= unit pos)
       (set-local result (if ennemy? =>
