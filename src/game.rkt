@@ -716,7 +716,7 @@
                         (else (store-byte (mem 'game 'current-action) (const 'action-blocked)))))))
             (else
               (if (and (not (call 'is-blocking-tile? pos))
-                       (call 'is-within-distance? 3))
+                       (call 'is-within-distance? 4))
                 (then (store-byte (mem 'game 'current-action) (const 'action-move)))
                 (else (store-byte (mem 'game 'current-action) (const 'action-blocked)))))))
         (else
@@ -845,7 +845,8 @@
     (call 'upgrade)))
 
 (func select (pos)
-  (store-byte (mem 'game 'selection) pos))
+  (store-byte (mem 'game 'selection) pos)
+  (call 'update-move-pile pos))
 
 (func cancel ()
   (store-byte (mem 'game 'selection) (const 'no-selection))
@@ -886,9 +887,9 @@
   (call 'fill-screen (mem 'palette 'black))
   (call 'show-level (call 'get-current-level))
   (call 'show-cursor-top)
+  (call 'show-path)
   (call 'show-current-units)
   (call 'show-cursor-bot)
-  (call 'show-path)
   (call 'show-action))
 
 (func keydown (key)
