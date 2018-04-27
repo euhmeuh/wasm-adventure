@@ -33,7 +33,9 @@
   'action-blocked 3
   'action-wait 4
   'action-select 5
-  'action-none #xFF)
+  'action-none #xFF
+  'player-turn 0
+  'ennemy-turn 1)
 
 (data
   '(width 0 0)
@@ -449,14 +451,14 @@
       8  8  8  0  0  8  8  8
       8  8  0  0  0  0  8  8
      wait 8 8
-      0  4  4  4  4  4  4  0
-      0  4  0  0  0  0  4  0
-      0  0  4  0  0  4  0  0
-      0  0  0  4  4  0  0  0
-      0  0  4  0  0  4  0  0
-      0  0  4 15 15  4  0  0
-      0  4 15 15 15 15  4  0
-      0  4  4  4  4  4  4  0
+      0  7  7  7  7  7  7  0
+      0  7  0  0  0  0  7  0
+      0  0  7  0  0  7  0  0
+      0  0  0  7  7  0  0  0
+      0  0  7  0  0  7  0  0
+      0  0  7 12 12  7  0  0
+      0  7 12 12 12 12  7  0
+      0  7  7  7  7  7  7  0
      ))
   '(levels 7189 (memstring 1
      level0
@@ -481,6 +483,7 @@
      51 0 74 2 88 1 89 1 103 0 #xFF #xFF
      ))
   '(game 8192 (memstring 1
+     turn 0
      coins 10
      cursor-pos 66
      selection #xFF
@@ -489,6 +492,10 @@
      current-level 0
      current-units #xFF #xFF #xFF #xFF))
   '(screen 10240 0))
+
+;; ============================================================================
+;;                               GRAPHICS ENGINE
+;; ============================================================================
 
 (func fill-pixels (pos len step color)
   (for pos len step
@@ -565,6 +572,10 @@
 (func row-down (pos) =>
   (return (+ pos (const 'board-width))))
 
+;; ============================================================================
+;;                                   DISPLAY
+;; ============================================================================
+
 (func show-level (level)
   (locals i tile)
   (set-local i 0)
@@ -623,14 +634,17 @@
 (func show-action ()
   (locals cursor-pos current-action)
   (set-local current-action (load-byte (mem 'game 'current-action)))
-  (if (and (call 'has-selection?)
-           (and (!= current-action (const 'action-none))
-                (!= current-action (const 'action-select))))
+  (if (and (!= current-action (const 'action-none))
+           (!= current-action (const 'action-select)))
     (set-local cursor-pos (load-byte (mem 'game 'cursor-pos)))
     (call 'sprite (+ 16 (call 'tile-x cursor-pos))
                   (call 'tile-y (call 'row-down cursor-pos))
                   (+ (mem 'actions 'start)
                      (* current-action (const 'action-size))))))
+
+;; ============================================================================
+;;                                   CURSOR
+;; ============================================================================
 
 (func move-cursor-up ()
   (locals pos)
@@ -679,73 +693,53 @@
           (if (= move pos) ;; we went back to an already visited tile
             (set-local erase-mode 1)))))))
 
+;; ============================================================================
+;;                             POSSIBLE ACTION
+;; ============================================================================
+
 (func update-action ()
   (locals pos)
   (set-local pos (load-byte (mem 'game 'cursor-pos)))
-  (if (call 'has-selection?)
+  (if (call 'is-ennemy-turn?)
     (then
-      (if (call 'is-unit? pos)
-        (then
-          (if (call 'is-selection? pos)
-            (then (store-byte (mem 'game 'current-action) (const 'action-upgrade)))
-            (else (if (and (call 'is-ennemy-unit? pos)
-                           (call 'within-distance? 1))
-                    (then (store-byte (mem 'game 'current-action) (const 'action-attack)))
-                    (else (store-byte (mem 'game 'current-action) (const 'action-blocked)))))))
-        (else
-          (if (and (not (call 'is-blocking-tile? pos))
-                   (call 'within-distance? 3))
-            (then (store-byte (mem 'game 'current-action) (const 'action-move)))
-            (else (store-byte (mem 'game 'current-action) (const 'action-blocked)))))))
+      (store-byte (mem 'game 'current-action) (const 'action-wait)))
     (else
-      (if (call 'is-player-unit? pos)
-        (then (store-byte (mem 'game 'current-action) (const 'action-select)))
-        (else (store-byte (mem 'game 'current-action) (const 'action-none)))))))
+      (if (call 'has-selection?)
+        (then
+          (if (call 'is-unit? pos)
+            (then
+              (if (call 'is-selection? pos)
+                (then (store-byte (mem 'game 'current-action) (const 'action-upgrade)))
+                (else (if (and (call 'is-ennemy-unit? pos)
+                               (call 'is-within-distance? 1))
+                        (then (store-byte (mem 'game 'current-action) (const 'action-attack)))
+                        (else (store-byte (mem 'game 'current-action) (const 'action-blocked)))))))
+            (else
+              (if (and (not (call 'is-blocking-tile? pos))
+                       (call 'is-within-distance? 3))
+                (then (store-byte (mem 'game 'current-action) (const 'action-move)))
+                (else (store-byte (mem 'game 'current-action) (const 'action-blocked)))))))
+        (else
+          (if (call 'is-player-unit? pos)
+            (then (store-byte (mem 'game 'current-action) (const 'action-select)))
+            (else (store-byte (mem 'game 'current-action) (const 'action-none)))))))))
+
+;; ============================================================================
+;;                                  CHECKS
+;; ============================================================================
 
 (func has-selection? () =>
   (return (!= (load-byte (mem 'game 'selection))
               (const 'no-selection))))
 
+(func is-player-turn? () =>
+  (return (= (load-byte (mem 'game 'turn)) (const 'player-turn))))
+
+(func is-ennemy-turn? () =>
+  (return (= (load-byte (mem 'game 'turn)) (const 'ennemy-turn))))
+
 (func is-selection? (pos) =>
   (return (= pos (load-byte (mem 'game 'selection)))))
-
-(func selected-unit () =>
-  (locals i addr unit selection result)
-  (set-local i 0)
-  (set-local result 0)
-  (set-local selection (load-byte (mem 'game 'selection)))
-  (if (!= selection (const 'no-selection))
-    (for i (* 2 (const 'board-size)) 2
-      (set-local addr (+ (mem 'game 'current-units) i))
-      (set-local unit (load-byte addr))
-      (if (= unit selection)
-        (set-local result addr)
-        (break))
-      (if (= unit #xFF) (break))))
-  (return result))
-
-(func current-level () =>
-  ;;(locals level)
-  ;;(set-local level (load-byte (mem 'game 'current-level)))
-  (return (mem 'levels 'level0)))
-
-(func level-units (level) =>
-  (return (+ level (const 'board-size))))
-
-(func load-level (level)
-  (locals i units pos lvl ennemy?)
-  (set-local i 0)
-  (set-local units (call 'level-units level))
-  (set-local ennemy? 0)
-  (for i (* 2 (const 'board-size)) 2
-    (set-local pos (load-byte (+ units i)))
-    (set-local lvl (load-byte (+ 1 (+ units i))))
-    (store-byte (+ i (mem 'game 'current-units)) pos)
-    (store-byte (+ 1 (+ i (mem 'game 'current-units))) lvl)
-    (if (and (= pos #xFF) ennemy?)
-      (break))
-    (if (and (= pos #xFF) (not ennemy?))
-      (set-local ennemy? 1))))
 
 (func is-unit? (pos) =>
   (locals i unit ennemy? result)
@@ -776,16 +770,66 @@
 
 (func is-blocking-tile? (pos) =>
   (locals tile)
-  (set-local tile (load-byte (+ (call 'current-level) pos)))
+  (set-local tile (load-byte (+ (call 'get-current-level) pos)))
   (return (or (= tile 1) ;; water
               (or (= tile 3) ;; pit
                   (= tile 4)) ;; pit 2
               )))
 
 ;; check if the cursor is too far from the selection or not
-(func within-distance? (max) =>
+(func is-within-distance? (max) =>
   (return (= (load-byte (+ (mem 'game 'move-pile) max))
              #xFF)))
+
+;; ============================================================================
+;;                               COMPLEX GETTERS
+;; ============================================================================
+
+(func get-selected-unit () =>
+  (locals i addr unit selection result)
+  (set-local i 0)
+  (set-local result 0)
+  (set-local selection (load-byte (mem 'game 'selection)))
+  (if (!= selection (const 'no-selection))
+    (for i (* 2 (const 'board-size)) 2
+      (set-local addr (+ (mem 'game 'current-units) i))
+      (set-local unit (load-byte addr))
+      (if (= unit selection)
+        (set-local result addr)
+        (break))
+      (if (= unit #xFF) (break))))
+  (return result))
+
+(func get-current-level () =>
+  ;;(locals level)
+  ;;(set-local level (load-byte (mem 'game 'current-level)))
+  (return (mem 'levels 'level0)))
+
+(func get-level-units (level) =>
+  (return (+ level (const 'board-size))))
+
+;; ============================================================================
+;;                                   LOAD
+;; ============================================================================
+
+(func load-level (level)
+  (locals i units pos lvl ennemy?)
+  (set-local i 0)
+  (set-local units (call 'get-level-units level))
+  (set-local ennemy? 0)
+  (for i (* 2 (const 'board-size)) 2
+    (set-local pos (load-byte (+ units i)))
+    (set-local lvl (load-byte (+ 1 (+ units i))))
+    (store-byte (+ i (mem 'game 'current-units)) pos)
+    (store-byte (+ 1 (+ i (mem 'game 'current-units))) lvl)
+    (if (and (= pos #xFF) ennemy?)
+      (break))
+    (if (and (= pos #xFF) (not ennemy?))
+      (set-local ennemy? 1))))
+
+;; ============================================================================
+;;                                GAME LOGIC
+;; ============================================================================
 
 (func enter ()
   (locals cursor-pos current-action)
@@ -811,7 +855,8 @@
   (store (+ 4 (mem 'game 'move-pile)) #xFFFFFFFF))
 
 (func move (pos)
-  (store-byte (call 'selected-unit) pos)
+  (store-byte (call 'get-selected-unit) pos)
+  (call 'end-player-turn)
   (call 'cancel))
 
 (func attack (pos)
@@ -820,19 +865,26 @@
 (func upgrade ()
   (locals coins lvl-addr lvl)
   (set-local coins (load-byte (mem 'game 'coins)))
-  (set-local lvl-addr (+ 1 (call 'selected-unit)))
+  (set-local lvl-addr (+ 1 (call 'get-selected-unit)))
   (set-local lvl (load-byte lvl-addr))
   (if (and (> coins 0) (< lvl 2))
     (store-byte lvl-addr (+ 1 lvl))
-    (store-byte (mem 'game 'coins) (- coins 1)))
+    (store-byte (mem 'game 'coins) (- coins 1))
+    (call 'end-player-turn))
   (call 'cancel))
+
+(func end-player-turn ()
+  (store-byte (mem 'game 'turn) (const 'ennemy-turn)))
+
+(func end-ennemy-turn ()
+  (store-byte (mem 'game 'turn) (const 'player-turn)))
 
 (func hello ()
   (call 'log (mem 'messages) 12))
 
 (func render ()
   (call 'fill-screen (mem 'palette 'black))
-  (call 'show-level (call 'current-level))
+  (call 'show-level (call 'get-current-level))
   (call 'show-cursor-top)
   (call 'show-current-units)
   (call 'show-cursor-bot)
