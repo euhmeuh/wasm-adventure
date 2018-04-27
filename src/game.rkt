@@ -35,7 +35,8 @@
   'action-select 5
   'action-none #xFF
   'player-turn 0
-  'ennemy-turn 1)
+  'ennemy-turn 1
+  'ai-actions-size 16)
 
 (data
   '(width 0 0)
@@ -478,19 +479,29 @@
      3 3 0 0 1 1 1 1 1 2 2 0 3
      4 4 0 1 1 1 1 1 1 1 1 2 4
      ;; player units
-     66 1 78 0 81 0 104 0 #xFF #xFF
+     66 1 78 0 81 0 104 0 #xFFFF
      ;; ennemy units
-     51 0 74 2 88 1 89 1 103 0 #xFF #xFF
+     51 0 74 2 88 1 89 1 103 0 #xFFFF
      ))
   '(game 8192 (memstring 1
      turn 0
      coins 10
      cursor-pos 66
+     ai-cursor-pos 70
      selection #xFF
+
+     ;; keep track of cursor position when moving a unit to draw a path
      move-pile #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF
-     current-action #xFF
+
+     ;; a list of actions the IA will make this turn
+     ai-moves #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF
+
+     current-action #xFF ;; what the player can currently do when pressing the action button
      current-level 0
-     current-units #xFF #xFF #xFF #xFF))
+
+     ;; a list of player units (pos, lvl), then the #xFFFF separator,
+     ;; then a list of ennemy units (pos, lvl), then the ending #xFFFF
+     current-units #xFFFF #xFFFF))
   '(screen 10240 0))
 
 ;; ============================================================================
@@ -828,6 +839,18 @@
       (set-local ennemy? 1))))
 
 ;; ============================================================================
+;;                                    AI
+;; ============================================================================
+
+;; fill the AI pile with actions to execute for the turn
+(func prepare-ai-moves ()
+  )
+
+;; pick an action and execute it
+(func ai-move ()
+  )
+
+;; ============================================================================
 ;;                                GAME LOGIC
 ;; ============================================================================
 
@@ -875,7 +898,8 @@
   (call 'cancel))
 
 (func end-player-turn ()
-  (store-byte (mem 'game 'turn) (const 'ennemy-turn)))
+  (store-byte (mem 'game 'turn) (const 'ennemy-turn))
+  (call 'prepare-ai-moves))
 
 (func end-ennemy-turn ()
   (store-byte (mem 'game 'turn) (const 'player-turn)))
@@ -907,12 +931,13 @@
     (call 'cancel))
   (call 'update-action))
 
-;;(func update (delta)
-;;  todo)
+(func update (delta)
+  (if (> delta 15) ;; every 15 frames (500ms)
+    (call 'ai-move)))
 
 (export "memory" (memory 0))
 (export "init" (func $init))
 (export "render" (func $render))
 (export "keydown" (func $keydown))
-;;(export "update" (func $update))
+(export "update" (func $update))
 (export "hello" (func $hello))
