@@ -121,7 +121,7 @@
         let fc = new FpsCtrl(30, (e) => {
           engine.instance.exports.render();
           engine.canvasCtx.putImageData(engine.imageData, 0, 0);
-          //engine.instance.exports.update(e.delta);
+          engine.instance.exports.update(e.frame % 0xFFFFFFFF);
         });
         fc.start();
       }

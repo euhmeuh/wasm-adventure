@@ -27,16 +27,15 @@
   'player-unit 1
   'ennemy-unit 2
   'move-pile-len 8
+  'ai-moves-len 16
   'action-upgrade 0
   'action-move 1
   'action-attack 2
   'action-blocked 3
-  'action-wait 4
-  'action-select 5
+  'action-select 4
   'action-none #xFF
   'player-turn 0
-  'ennemy-turn 1
-  'ai-actions-size 16)
+  'ennemy-turn 1)
 
 (data
   '(width 0 0)
@@ -451,15 +450,6 @@
       0  8  8  8  8  8  8  0
       8  8  8  0  0  8  8  8
       8  8  0  0  0  0  8  8
-     wait 8 8
-      0  7  7  7  7  7  7  0
-      0  7  0  0  0  0  7  0
-      0  0  7  0  0  7  0  0
-      0  0  0  7  7  0  0  0
-      0  0  7  0  0  7  0  0
-      0  0  7 12 12  7  0  0
-      0  7 12 12 12 12  7  0
-      0  7  7  7  7  7  7  0
      ))
   '(levels 7189 (memstring 1
      level0
@@ -493,7 +483,7 @@
      ;; keep track of cursor position when moving a unit to draw a path
      move-pile #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF
 
-     ;; a list of actions the IA will make this turn
+     ;; a list of keys the IA will press this turn
      ai-moves #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF
 
      current-action #xFF ;; what the player can currently do when pressing the action button
@@ -614,18 +604,14 @@
                      (* (+ level (* 3 ennemy?))
                         (const 'soldier-size))))))
 
-(func show-cursor-top ()
-  (locals pos)
-  (set-local pos (load-byte (mem 'game 'cursor-pos)))
+(func show-cursor-top (pos)
   (call 'sprite (- (call 'tile-x pos) 2)
                 (- (call 'tile-y pos) 2)
                 (if (call 'has-selection?) =>
                   (then (mem 'ui 'cursor-top-selected))
                   (else (mem 'ui 'cursor-top)))))
 
-(func show-cursor-bot ()
-  (locals pos)
-  (set-local pos (load-byte (mem 'game 'cursor-pos)))
+(func show-cursor-bot (pos)
   (call 'sprite (- (call 'tile-x pos) 2)
                 (+ (call 'tile-y pos) 8)
                 (if (call 'has-selection?) =>
@@ -711,29 +697,25 @@
 (func update-action ()
   (locals pos)
   (set-local pos (load-byte (mem 'game 'cursor-pos)))
-  (if (call 'is-ennemy-turn?)
+  (if (call 'has-selection?)
     (then
-      (store-byte (mem 'game 'current-action) (const 'action-wait)))
-    (else
-      (if (call 'has-selection?)
+      (if (call 'is-unit? pos)
         (then
-          (if (call 'is-unit? pos)
-            (then
-              (if (call 'is-selection? pos)
-                (then (store-byte (mem 'game 'current-action) (const 'action-upgrade)))
-                (else (if (and (call 'is-ennemy-unit? pos)
-                               (call 'is-within-distance? 1))
-                        (then (store-byte (mem 'game 'current-action) (const 'action-attack)))
-                        (else (store-byte (mem 'game 'current-action) (const 'action-blocked)))))))
-            (else
-              (if (and (not (call 'is-blocking-tile? pos))
-                       (call 'is-within-distance? 4))
-                (then (store-byte (mem 'game 'current-action) (const 'action-move)))
-                (else (store-byte (mem 'game 'current-action) (const 'action-blocked)))))))
+          (if (call 'is-selection? pos)
+            (then (store-byte (mem 'game 'current-action) (const 'action-upgrade)))
+            (else (if (and (call 'is-ennemy-unit? pos)
+                           (call 'is-within-distance? 2))
+                    (then (store-byte (mem 'game 'current-action) (const 'action-attack)))
+                    (else (store-byte (mem 'game 'current-action) (const 'action-blocked)))))))
         (else
-          (if (call 'is-player-unit? pos)
-            (then (store-byte (mem 'game 'current-action) (const 'action-select)))
-            (else (store-byte (mem 'game 'current-action) (const 'action-none)))))))))
+          (if (and (not (call 'is-blocking-tile? pos))
+                   (call 'is-within-distance? 4))
+            (then (store-byte (mem 'game 'current-action) (const 'action-move)))
+            (else (store-byte (mem 'game 'current-action) (const 'action-blocked)))))))
+    (else
+      (if (call 'is-player-unit? pos)
+        (then (store-byte (mem 'game 'current-action) (const 'action-select)))
+        (else (store-byte (mem 'game 'current-action) (const 'action-none)))))))
 
 ;; ============================================================================
 ;;                                  CHECKS
@@ -811,6 +793,18 @@
       (if (= unit #xFF) (break))))
   (return result))
 
+(func get-ennemy-units () =>
+  (locals i addr unit result)
+  (set-local i 0)
+  (set-local result 0)
+  (for i (* 2 (const 'board-size)) 2
+    (set-local addr (+ (mem 'game 'current-units) i))
+    (set-local unit (load-byte addr))
+    (if (= unit #xFF)
+      (set-local result (+ 2 addr))
+      (break)))
+  (return result))
+
 (func get-current-level () =>
   ;;(locals level)
   ;;(set-local level (load-byte (mem 'game 'current-level)))
@@ -838,21 +832,66 @@
     (if (and (= pos #xFF) (not ennemy?))
       (set-local ennemy? 1))))
 
+(func next-level ())
+
 ;; ============================================================================
 ;;                                    AI
 ;; ============================================================================
 
+(func find-best-unit (units) =>
+  (return units))
+
 ;; fill the AI pile with actions to execute for the turn
 (func prepare-ai-moves ()
-  )
+  (locals units)
+  (set-local units (call 'get-ennemy-units))
+
+  ;; put the cursor on the choosen unit
+  (store-byte (mem 'game 'ai-cursor-pos)
+              (load-byte (call 'find-best-unit units)))
+
+  ;; choose what to do
+  (call 'push-ai-move (const 'key-a))
+  (call 'push-ai-move (const 'key-left))
+  (call 'push-ai-move (const 'key-a)))
 
 ;; pick an action and execute it
 (func ai-move ()
-  )
+  (locals move)
+  (set-local move (call 'pop-ai-move))
+  (if (= move #xFF)
+    (then (call 'end-ennemy-turn))
+    (else (call 'ai-keydown move))))
+
+(func push-ai-move (key)
+  (locals i move)
+  (set-local i 0)
+  (for i (const 'ai-moves-len) 1
+    (set-local move (load-byte (+ (mem 'game 'ai-moves) i)))
+    (if (= move #xFF) ;; we can add to the pile
+      (store-byte (+ (mem 'game 'ai-moves) i) key)
+      (break))))
+
+(func pop-ai-move () =>
+  (locals i move result)
+  (set-local i 0)
+  (set-local result #xFF)
+  (for i (const 'ai-moves-len) 1
+    (set-local move (load-byte (+ (mem 'game 'ai-moves) i)))
+    (if (= move #xFF)
+      (if (> i 0)
+        ;; erase precedent move
+        (store-byte (+ (mem 'game 'ai-moves) (- i 1)) #xFF))
+      (break))
+    (set-local result move))
+  (return result))
 
 ;; ============================================================================
 ;;                                GAME LOGIC
 ;; ============================================================================
+
+(func check-victory () =>
+  (return (= (load-byte (call 'get-ennemy-units)) #xFF)))
 
 (func enter ()
   (locals cursor-pos current-action)
@@ -898,8 +937,12 @@
   (call 'cancel))
 
 (func end-player-turn ()
-  (store-byte (mem 'game 'turn) (const 'ennemy-turn))
-  (call 'prepare-ai-moves))
+  (if (call 'check-victory)
+    (then
+      (call 'next-level))
+    (else
+      (call 'prepare-ai-moves)
+      (store-byte (mem 'game 'turn) (const 'ennemy-turn)))))
 
 (func end-ennemy-turn ()
   (store-byte (mem 'game 'turn) (const 'player-turn)))
@@ -910,29 +953,42 @@
 (func render ()
   (call 'fill-screen (mem 'palette 'black))
   (call 'show-level (call 'get-current-level))
-  (call 'show-cursor-top)
+
+  (if (call 'is-player-turn?)
+    (then (call 'show-cursor-top (load-byte (mem 'game 'cursor-pos))))
+    (else (call 'show-cursor-top (load-byte (mem 'game 'ai-cursor-pos)))))
+
   (call 'show-path)
   (call 'show-current-units)
-  (call 'show-cursor-bot)
+
+  (if (call 'is-player-turn?)
+    (then (call 'show-cursor-bot (load-byte (mem 'game 'cursor-pos))))
+    (else (call 'show-cursor-bot (load-byte (mem 'game 'ai-cursor-pos)))))
+
   (call 'show-action))
 
 (func keydown (key)
-  (if (= key (const 'key-up))
-    (call 'move-cursor-up))
-  (if (= key (const 'key-down))
-    (call 'move-cursor-down))
-  (if (= key (const 'key-left))
-    (call 'move-cursor-left))
-  (if (= key (const 'key-right))
-    (call 'move-cursor-right))
-  (if (= key (const 'key-a))
-    (call 'enter))
-  (if (= key (const 'key-b))
-    (call 'cancel))
-  (call 'update-action))
+  (if (call 'is-player-turn?)
+    (if (= key (const 'key-up))
+      (call 'move-cursor-up))
+    (if (= key (const 'key-down))
+      (call 'move-cursor-down))
+    (if (= key (const 'key-left))
+      (call 'move-cursor-left))
+    (if (= key (const 'key-right))
+      (call 'move-cursor-right))
+    (if (= key (const 'key-a))
+      (call 'enter))
+    (if (= key (const 'key-b))
+      (call 'cancel))
+    (call 'update-action)))
 
-(func update (delta)
-  (if (> delta 15) ;; every 15 frames (500ms)
+(func ai-keydown (key)
+  (call 'log-num key))
+
+(func update (frame)
+  (if (and (= (% frame 15) 0)
+           (call 'is-ennemy-turn?))
     (call 'ai-move)))
 
 (export "memory" (memory 0))
