@@ -474,10 +474,13 @@
      51 0 74 2 88 1 89 1 103 0 #xFFFF
      ))
   '(game 8192 (memstring 1
+     level 0
      turn 0
-     coins 10
+     blue-coins 10
+     red-coins 10
      cursor-pos 66
      ai-cursor-pos 70
+
      selection #xFF
 
      ;; keep track of cursor position when moving a unit to draw a path
@@ -487,7 +490,6 @@
      ai-moves #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF
 
      current-action #xFF ;; what the player can currently do when pressing the action button
-     current-level 0
 
      ;; a list of blue units (pos, lvl), then the #xFFFF separator,
      ;; then a list of red units (pos, lvl), then the ending #xFFFF
@@ -790,7 +792,7 @@
 ;; ============================================================================
 
 (func get-selected-unit () =>
-  (locals i addr unit selection result)
+  (locals i addr unit selection red-team? result)
   (set-local i 0)
   (set-local result 0)
   (set-local selection (load-byte (mem 'game 'selection)))
@@ -801,7 +803,10 @@
       (if (= unit selection)
         (set-local result addr)
         (break))
-      (if (= unit #xFF) (break))))
+      (if (and (= unit #xFF) red-team?)
+        (break))
+      (if (and (= unit #xFF) (not red-team?))
+        (set-local red-team? 1))))
   (return result))
 
 (func get-red-units () =>
@@ -818,11 +823,16 @@
 
 (func get-current-level () =>
   ;;(locals level)
-  ;;(set-local level (load-byte (mem 'game 'current-level)))
+  ;;(set-local level (load-byte (mem 'game 'level)))
   (return (mem 'levels 'level0)))
 
 (func get-level-units (level) =>
   (return (+ level (const 'board-size))))
+
+(func get-coins () =>
+  (if (call 'is-blue-turn?) =>
+    (then (mem 'game 'blue-coins))
+    (else (mem 'game 'red-coins))))
 
 ;; ============================================================================
 ;;                                   LOAD
@@ -938,12 +948,12 @@
 
 (func upgrade ()
   (locals coins lvl-addr lvl)
-  (set-local coins (load-byte (mem 'game 'coins)))
+  (set-local coins (load-byte (call 'get-coins)))
   (set-local lvl-addr (+ 1 (call 'get-selected-unit)))
   (set-local lvl (load-byte lvl-addr))
   (if (and (> coins 0) (< lvl 2))
     (store-byte lvl-addr (+ 1 lvl))
-    (store-byte (mem 'game 'coins) (- coins 1))
+    (store-byte (call 'get-coins) (- coins 1))
     (call 'end-turn))
   (call 'cancel))
 
