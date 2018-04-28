@@ -834,32 +834,24 @@
 ;; ============================================================================
 
 (func get-selected-unit () =>
-  (locals i addr unit selection red-team? result)
-  (set-local i 0)
+  (locals selection result)
   (set-local result 0)
   (set-local selection (load-byte (mem 'game 'selection)))
   (if (!= selection (const 'no-selection))
-    (for i (* 4 (const 'board-size)) 4
-      (set-local addr (+ (mem 'game 'current-units) i))
-      (set-local unit (load-byte addr))
-      (if (= unit selection)
-        (set-local result addr)
-        (break))
-      (if (and (= unit #xFF) red-team?)
-        (break))
-      (if (and (= unit #xFF) (not red-team?))
-        (set-local red-team? 1))))
+    (set-local result (call 'get-unit selection)))
   (return result))
 
 (func get-unit-under-cursor () =>
-  (locals i addr unit cursor-pos red-team? result)
+  (return (call 'get-unit (load-byte (call 'get-cursor)))))
+
+(func get-unit (pos) =>
+  (locals i addr unit red-team? result)
   (set-local i 0)
   (set-local result 0)
-  (set-local cursor-pos (load-byte (call 'get-cursor)))
   (for i (* 4 (const 'board-size)) 4
     (set-local addr (+ (mem 'game 'current-units) i))
     (set-local unit (load-byte addr))
-    (if (= unit cursor-pos)
+    (if (= unit pos)
       (set-local result addr)
       (break))
     (if (and (= unit #xFF) red-team?)
@@ -928,6 +920,8 @@
   (if (= 2 lvl)
     (store-byte (+ addr 2) (const 'big-unit-hp))
     (store-byte (+ addr 3) (const 'big-unit-atk))))
+
+(func remove-unit (addr))
 
 ;; ============================================================================
 ;;                                    AI
@@ -1018,7 +1012,14 @@
   (call 'cancel))
 
 (func attack (pos)
-  (call 'log-num 6666))
+  (locals unit atk target target-hp)
+  (set-local unit (call 'get-selected-unit))
+  (set-local atk (load-byte (+ unit 3)))
+  (set-local target (call 'get-unit pos))
+  (set-local target-hp (load-byte (+ target 2)))
+  (if (<= target-hp atk)
+    (then (call 'remove-unit target))
+    (else (store-byte (+ target 2) (- target-hp atk)))))
 
 (func upgrade ()
   (locals coins unit-addr lvl)
