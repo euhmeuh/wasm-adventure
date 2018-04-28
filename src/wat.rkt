@@ -21,6 +21,7 @@
          data-section
          for
          break
+         continue
          (rename-out (add +))
          (rename-out (sub -))
          (rename-out (mul *))
@@ -125,6 +126,9 @@
 
 (define (break)
   '(br $done))
+
+(define (continue)
+  `(br $loop))
 
 (define (eq x y)
   `(i32.eq ,(var x) ,(var y)))

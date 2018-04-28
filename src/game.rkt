@@ -35,7 +35,16 @@
   'action-select 4
   'action-none #xFF
   'blue-turn 0
-  'red-turn 1)
+  'red-turn 1
+  ;; small unit has few ATK but medium HP
+  'small-unit-hp 2
+  'small-unit-atk 1
+  ;; medium unit has medium ATK but big HP
+  'medium-unit-hp 3
+  'medium-unit-atk 2
+  ;; big unit has a lot of ATK, but few HP
+  'big-unit-hp 2
+  'big-unit-atk 3)
 
 (data
   '(width 0 0)
@@ -464,7 +473,7 @@
      0 0 0 0 0 0 2 2 0 0 0 0 0
      0 0 0 0 0 0 0 0 0 0 0 0 0
      0 0 0 0 0 0 0 0 0 0 0 0 0
-     0 0 0 0 0 0 0 0 0 0 0 0 0
+     0 3 0 0 0 0 0 0 0 0 0 0 0
      0 0 0 0 1 1 1 1 0 0 0 0 0
      3 3 0 0 1 1 1 1 1 2 2 0 3
      4 4 0 1 1 1 1 1 1 1 1 2 4
@@ -491,9 +500,9 @@
 
      current-action #xFF ;; what the player can currently do when pressing the action button
 
-     ;; a list of blue units (pos, lvl), then the #xFFFF separator,
-     ;; then a list of red units (pos, lvl), then the ending #xFFFF
-     current-units #xFFFF #xFFFF))
+     ;; a list of blue units (pos, lvl, hp, atk), then the #xFFFFFFFF separator,
+     ;; then a list of red units (pos, lvl, hp, atk), then the ending #xFFFFFFFF
+     current-units #xFFFFFFFF #xFFFFFFFF))
   '(screen 10240 0))
 
 ;; ============================================================================
@@ -520,6 +529,12 @@
 (func fill-screen (color)
   ;;; fill the whole screen with a color
   (call 'fill-pixels 0 (* (load (mem 'width)) (load (mem 'height))) 1 color))
+
+(func fill-vertical-line (x y len color)
+  (locals i stop)
+  (set-local i (+ x (* y (load (mem 'width)))))
+  (set-local stop (+ i len))
+  (call 'fill-pixels i stop 1 color))
 
 (func pixel (pos color)
   ;;; draw a pixel at the given position in memory with the given color
@@ -593,18 +608,54 @@
   (locals i pos level units red-team?)
   (set-local i 0)
   (set-local units (mem 'game 'current-units))
-  (for i (* 2 (const 'board-size)) 2
+  (for i (* 4 (const 'board-size)) 4
     (set-local pos (load-byte (+ units i)))
     (set-local level (load-byte (+ units (+ 1 i))))
     (if (and (= pos #xFF) red-team?)
       (break))
     (if (and (= pos #xFF) (not red-team?))
-      (set-local red-team? 1))
+      (set-local red-team? 1)
+      (set-local i (+ 4 i))
+      (continue))
     (call 'sprite (call 'tile-x pos)
                   (call 'tile-y (call 'row-up pos))
                   (+ (mem 'units 'start)
                      (* (+ level (* 3 red-team?))
                         (const 'soldier-size))))))
+
+(func show-unit-stats ()
+  (locals i pos hp atk units red-team?)
+  (set-local i 0)
+  (set-local units (mem 'game 'current-units))
+  (for i (* 4 (const 'board-size)) 4
+    (set-local pos (load-byte (+ units i)))
+    (set-local hp (load-byte (+ units (+ 2 i))))
+    (set-local atk (load-byte (+ units (+ 3 i))))
+    (if (and (= pos #xFF) red-team?)
+      (break))
+    (if (and (= pos #xFF) (not red-team?))
+      (set-local red-team? 1)
+      (set-local i (+ 4 i))
+      (continue))
+    (call 'show-points (call 'tile-x pos)
+                       (call 'tile-y (call 'row-down pos))
+                       (mem 'palette 'red)
+                       hp)
+    (call 'show-points (+ (call 'tile-x pos) 5)
+                       (call 'tile-y (call 'row-down pos))
+                       (mem 'palette 'blue)
+                       atk)))
+
+(func show-points (x y color n)
+  (locals i)
+  (set-local i 0)
+  (set-local n (* n 3))
+  (for i n 3
+    (call 'fill-vertical-line x (+ y i) 6 (mem 'palette 'white))
+    (call 'fill-vertical-line x (+ (+ y i) 1) 6 (mem 'palette 'white))
+    (call 'fill-vertical-line x (+ (+ y i) 2) 6 (mem 'palette 'white))
+    (call 'fill-vertical-line (+ x 1) (+ y i) 4 color)
+    (call 'fill-vertical-line (+ x 1) (+ (+ y i) 1) 4 color)))
 
 (func show-cursor-top (pos)
   (call 'sprite (- (call 'tile-x pos) 2)
@@ -746,7 +797,7 @@
   (set-local i 0)
   (set-local result 0)
   (set-local red? 0)
-  (for i (* 2 (const 'board-size)) 2
+  (for i (* 4 (const 'board-size)) 4
     (set-local unit (load-byte (+ (mem 'game 'current-units) i)))
     (if (= unit pos)
       (set-local result (if red? =>
@@ -797,7 +848,7 @@
   (set-local result 0)
   (set-local selection (load-byte (mem 'game 'selection)))
   (if (!= selection (const 'no-selection))
-    (for i (* 2 (const 'board-size)) 2
+    (for i (* 4 (const 'board-size)) 4
       (set-local addr (+ (mem 'game 'current-units) i))
       (set-local unit (load-byte addr))
       (if (= unit selection)
@@ -813,11 +864,11 @@
   (locals i addr unit result)
   (set-local i 0)
   (set-local result 0)
-  (for i (* 2 (const 'board-size)) 2
+  (for i (* 4 (const 'board-size)) 4
     (set-local addr (+ (mem 'game 'current-units) i))
     (set-local unit (load-byte addr))
     (if (= unit #xFF)
-      (set-local result (+ 2 addr))
+      (set-local result (+ 4 addr))
       (break)))
   (return result))
 
@@ -846,14 +897,29 @@
   (for i (* 2 (const 'board-size)) 2
     (set-local pos (load-byte (+ units i)))
     (set-local lvl (load-byte (+ 1 (+ units i))))
-    (store-byte (+ i (mem 'game 'current-units)) pos)
-    (store-byte (+ 1 (+ i (mem 'game 'current-units))) lvl)
+    ;; we multiply i by 2 because an in-game unit is 4 bytes
+    (store-byte (+ (* i 2) (mem 'game 'current-units)) pos)
+    (store-byte (+ 1 (+ (* i 2) (mem 'game 'current-units))) lvl)
+    (call 'init-unit (+ (* i 2) (mem 'game 'current-units)))
     (if (and (= pos #xFF) red?)
       (break))
     (if (and (= pos #xFF) (not red?))
       (set-local red? 1))))
 
 (func next-level ())
+
+(func init-unit (addr)
+  (locals lvl)
+  (set-local lvl (load-byte (+ addr 1)))
+  (if (= 0 lvl)
+    (store-byte (+ addr 2) (const 'small-unit-hp))
+    (store-byte (+ addr 3) (const 'small-unit-atk)))
+  (if (= 1 lvl)
+    (store-byte (+ addr 2) (const 'medium-unit-hp))
+    (store-byte (+ addr 3) (const 'medium-unit-atk)))
+  (if (= 2 lvl)
+    (store-byte (+ addr 2) (const 'big-unit-hp))
+    (store-byte (+ addr 3) (const 'big-unit-atk))))
 
 ;; ============================================================================
 ;;                                    AI
@@ -947,12 +1013,13 @@
   (call 'log-num 6666))
 
 (func upgrade ()
-  (locals coins lvl-addr lvl)
+  (locals coins unit-addr lvl)
   (set-local coins (load-byte (call 'get-coins)))
-  (set-local lvl-addr (+ 1 (call 'get-selected-unit)))
-  (set-local lvl (load-byte lvl-addr))
+  (set-local unit-addr (call 'get-selected-unit))
+  (set-local lvl (load-byte (+ 1 unit-addr)))
   (if (and (> coins 0) (< lvl 2))
-    (store-byte lvl-addr (+ 1 lvl))
+    (store-byte (+ 1 unit-addr) (+ 1 lvl))
+    (call 'init-unit unit-addr)
     (store-byte (call 'get-coins) (- coins 1))
     (call 'end-turn))
   (call 'cancel))
@@ -983,6 +1050,7 @@
   (call 'show-path)
   (call 'show-current-units)
   (call 'show-cursor-bot (load-byte (call 'get-cursor)))
+  (call 'show-unit-stats)
   (call 'show-action))
 
 (func player-keydown (key)
