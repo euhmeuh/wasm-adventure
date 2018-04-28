@@ -69,7 +69,9 @@
      pink        #xFF77A8
      peach       #xFFCCAA
      black       #x000000))
-  '(messages 256 "Hello world!")
+  '(message-hello 256 "Hello world!")
+  '(message-victory 268 "Victory!")
+  '(message-defeat 276 "Defeat!")
   '(tiles 512 (memstring 1
      start
      grass 16 16
@@ -824,6 +826,17 @@
   (return (= (load-byte (+ (mem 'game 'move-pile) max))
              #xFF)))
 
+(func any-units-left? (units) =>
+  (locals i pos result)
+  (set-local i units)
+  (set-local result 0)
+  (for i (mem 'game 'current-units-end) 4
+    (set-local pos (load-byte i))
+    (if (!= pos #xFF)
+      (set-local result 1)
+      (break)))
+  (return result))
+
 ;; ============================================================================
 ;;                               COMPLEX GETTERS
 ;; ============================================================================
@@ -884,7 +897,11 @@
         (store-byte (+ target-addr 1) lvl)
         (call 'init-unit target-addr)))))
 
-(func next-level ())
+(func next-level ()
+  (call 'log (mem 'message-victory) 8))
+
+(func game-over ()
+  (call 'log (mem 'message-defeat) 7))
 
 (func init-unit (addr)
   (locals lvl)
@@ -899,14 +916,23 @@
     (store-byte (+ addr 2) (const 'big-unit-hp))
     (store-byte (+ addr 3) (const 'big-unit-atk))))
 
-(func remove-unit (addr))
+(func remove-unit (addr)
+  (store addr #xFFFFFFFF))
 
 ;; ============================================================================
 ;;                                    AI
 ;; ============================================================================
 
 (func find-best-unit (units) =>
-  (return units))
+  (locals i pos result)
+  (set-local i units)
+  (set-local result 0)
+  (for i (mem 'game 'current-units-end) 4
+    (set-local pos (load-byte i))
+    (if (!= pos #xFF)
+      (set-local result i)
+      (break)))
+  (return result))
 
 ;; fill the AI pile with actions to execute for the turn
 (func prepare-ai-moves ()
@@ -958,7 +984,10 @@
 ;; ============================================================================
 
 (func check-blue-victory () =>
-  (return (= (load-byte (mem 'game 'current-red-units)) #xFF)))
+  (return (not (call 'any-units-left? (mem 'game 'current-red-units)))))
+
+(func check-red-victory () =>
+  (return (not (call 'any-units-left? (mem 'game 'current-blue-units)))))
 
 (func enter ()
   (locals cursor-pos current-action)
@@ -986,8 +1015,8 @@
 
 (func move (pos)
   (store-byte (call 'get-selected-unit) pos)
-  (call 'end-turn)
-  (call 'cancel))
+  (call 'cancel)
+  (call 'end-turn))
 
 (func attack (pos)
   (locals unit atk target target-hp)
@@ -997,7 +1026,9 @@
   (set-local target-hp (load-byte (+ target 2)))
   (if (<= target-hp atk)
     (then (call 'remove-unit target))
-    (else (store-byte (+ target 2) (- target-hp atk)))))
+    (else (store-byte (+ target 2) (- target-hp atk))))
+  (call 'cancel)
+  (call 'end-turn))
 
 (func upgrade ()
   (locals coins unit-addr lvl)
@@ -1025,10 +1056,14 @@
       (store-byte (mem 'game 'turn) (const 'red-turn)))))
 
 (func end-red-turn ()
-  (store-byte (mem 'game 'turn) (const 'blue-turn)))
+  (if (call 'check-red-victory)
+    (then
+      (call 'game-over))
+    (else
+      (store-byte (mem 'game 'turn) (const 'blue-turn)))))
 
 (func hello ()
-  (call 'log (mem 'messages) 12))
+  (call 'log (mem 'message-hello) 12))
 
 (func render ()
   (call 'fill-screen (mem 'palette 'black))
