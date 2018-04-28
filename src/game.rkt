@@ -24,8 +24,8 @@
   'board-height 11
   'board-size 143
   'no-selection #xFF
-  'player-unit 1
-  'ennemy-unit 2
+  'blue-unit 1
+  'red-unit 2
   'move-pile-len 8
   'ai-moves-len 16
   'action-upgrade 0
@@ -34,8 +34,8 @@
   'action-blocked 3
   'action-select 4
   'action-none #xFF
-  'player-turn 0
-  'ennemy-turn 1)
+  'blue-turn 0
+  'red-turn 1)
 
 (data
   '(width 0 0)
@@ -150,7 +150,7 @@
     ))
   '(units 1803 (memstring 1
      start
-     soldier0 16 32
+     blue0 16 32
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
@@ -183,7 +183,7 @@
       0  0  6  6  0  0  0  0  6  6  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-     soldier1 16 32
+     blue1 16 32
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
@@ -216,7 +216,7 @@
       0  0  6  6  0  0  0  0  6  6  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-     soldier2 16 32
+     blue2 16 32
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
@@ -249,7 +249,7 @@
       0  0  6  6  0  0  0  0  6  6  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-     ennemy0 16 32
+     red0 16 32
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
@@ -282,7 +282,7 @@
       0  0  0  0  0  0  6  6  0  0  0  0  6  6  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-     ennemy1 16 32
+     red1 16 32
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
@@ -315,7 +315,7 @@
       0  0  0  0  0  0  6  6  0  0  0  0  6  6  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-     ennemy2 16 32
+     red2 16 32
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
@@ -468,9 +468,9 @@
      0 0 0 0 1 1 1 1 0 0 0 0 0
      3 3 0 0 1 1 1 1 1 2 2 0 3
      4 4 0 1 1 1 1 1 1 1 1 2 4
-     ;; player units
+     ;; blue units
      66 1 78 0 81 0 104 0 #xFFFF
-     ;; ennemy units
+     ;; red units
      51 0 74 2 88 1 89 1 103 0 #xFFFF
      ))
   '(game 8192 (memstring 1
@@ -489,8 +489,8 @@
      current-action #xFF ;; what the player can currently do when pressing the action button
      current-level 0
 
-     ;; a list of player units (pos, lvl), then the #xFFFF separator,
-     ;; then a list of ennemy units (pos, lvl), then the ending #xFFFF
+     ;; a list of blue units (pos, lvl), then the #xFFFF separator,
+     ;; then a list of red units (pos, lvl), then the ending #xFFFF
      current-units #xFFFF #xFFFF))
   '(screen 10240 0))
 
@@ -588,20 +588,20 @@
                   (+ (mem 'tiles 'start) (* (const 'tile-size) tile)))))
 
 (func show-current-units ()
-  (locals i pos level units ennemy?)
+  (locals i pos level units red-team?)
   (set-local i 0)
   (set-local units (mem 'game 'current-units))
   (for i (* 2 (const 'board-size)) 2
     (set-local pos (load-byte (+ units i)))
     (set-local level (load-byte (+ units (+ 1 i))))
-    (if (and (= pos #xFF) ennemy?)
+    (if (and (= pos #xFF) red-team?)
       (break))
-    (if (and (= pos #xFF) (not ennemy?))
-      (set-local ennemy? 1))
+    (if (and (= pos #xFF) (not red-team?))
+      (set-local red-team? 1))
     (call 'sprite (call 'tile-x pos)
                   (call 'tile-y (call 'row-up pos))
                   (+ (mem 'units 'start)
-                     (* (+ level (* 3 ennemy?))
+                     (* (+ level (* 3 red-team?))
                         (const 'soldier-size))))))
 
 (func show-cursor-top (pos)
@@ -633,7 +633,7 @@
   (set-local current-action (load-byte (mem 'game 'current-action)))
   (if (and (!= current-action (const 'action-none))
            (!= current-action (const 'action-select)))
-    (set-local cursor-pos (load-byte (mem 'game 'cursor-pos)))
+    (set-local cursor-pos (load-byte (call 'get-cursor)))
     (call 'sprite (+ 16 (call 'tile-x cursor-pos))
                   (call 'tile-y (call 'row-down cursor-pos))
                   (+ (mem 'actions 'start)
@@ -643,34 +643,39 @@
 ;;                                   CURSOR
 ;; ============================================================================
 
+(func get-cursor () =>
+  (if (call 'is-blue-turn?) =>
+    (then (mem 'game 'cursor-pos))
+    (else (mem 'game 'ai-cursor-pos))))
+
 (func move-cursor-up ()
   (locals pos)
-  (set-local pos (load-byte (mem 'game 'cursor-pos)))
+  (set-local pos (load-byte (call 'get-cursor)))
   (if (>= pos (const 'board-width))
     (set-local pos (call 'row-up pos))
-    (store-byte (mem 'game 'cursor-pos) pos)
+    (store-byte (call 'get-cursor) pos)
     (call 'update-move-pile pos)))
 
 (func move-cursor-down ()
   (locals pos)
-  (set-local pos (call 'row-down (load-byte (mem 'game 'cursor-pos))))
+  (set-local pos (call 'row-down (load-byte (call 'get-cursor))))
   (if (< pos (const 'board-size))
-    (store-byte (mem 'game 'cursor-pos) pos)
+    (store-byte (call 'get-cursor) pos)
     (call 'update-move-pile pos)))
 
 (func move-cursor-left ()
   (locals pos)
-  (set-local pos (load-byte (mem 'game 'cursor-pos)))
+  (set-local pos (load-byte (call 'get-cursor)))
   (if (> (% pos (const 'board-width)) 0)
     (set-local pos (- pos 1))
-    (store-byte (mem 'game 'cursor-pos) pos)
+    (store-byte (call 'get-cursor) pos)
     (call 'update-move-pile pos)))
 
 (func move-cursor-right ()
   (locals pos)
-  (set-local pos (+ (load-byte (mem 'game 'cursor-pos)) 1))
+  (set-local pos (+ (load-byte (call 'get-cursor)) 1))
   (if (> (% pos (const 'board-width)) 0)
-    (store-byte (mem 'game 'cursor-pos) pos)
+    (store-byte (call 'get-cursor) pos)
     (call 'update-move-pile pos)))
 
 (func update-move-pile (pos)
@@ -696,7 +701,7 @@
 
 (func update-action ()
   (locals pos)
-  (set-local pos (load-byte (mem 'game 'cursor-pos)))
+  (set-local pos (load-byte (call 'get-cursor)))
   (if (call 'has-selection?)
     (then
       (if (call 'is-unit? pos)
@@ -725,41 +730,47 @@
   (return (!= (load-byte (mem 'game 'selection))
               (const 'no-selection))))
 
-(func is-player-turn? () =>
-  (return (= (load-byte (mem 'game 'turn)) (const 'player-turn))))
+(func is-blue-turn? () =>
+  (return (= (load-byte (mem 'game 'turn)) (const 'blue-turn))))
 
-(func is-ennemy-turn? () =>
-  (return (= (load-byte (mem 'game 'turn)) (const 'ennemy-turn))))
+(func is-red-turn? () =>
+  (return (= (load-byte (mem 'game 'turn)) (const 'red-turn))))
 
 (func is-selection? (pos) =>
   (return (= pos (load-byte (mem 'game 'selection)))))
 
 (func is-unit? (pos) =>
-  (locals i unit ennemy? result)
+  (locals i unit red? result)
   (set-local i 0)
   (set-local result 0)
-  (set-local ennemy? 0)
+  (set-local red? 0)
   (for i (* 2 (const 'board-size)) 2
     (set-local unit (load-byte (+ (mem 'game 'current-units) i)))
     (if (= unit pos)
-      (set-local result (if ennemy? =>
-                          (then (const 'ennemy-unit))
-                          (else (const 'player-unit))))
+      (set-local result (if red? =>
+                          (then (const 'red-unit))
+                          (else (const 'blue-unit))))
       (break))
-    (if (and (= unit #xFF) ennemy?)
+    (if (and (= unit #xFF) red?)
       ;; we finished scanning everything
       (break))
-    (if (and (= unit #xFF) (not ennemy?))
-      ;; we finished scanning player units
-      ;; so the following units will be ennemies
-      (set-local ennemy? 1)))
+    (if (and (= unit #xFF) (not red?))
+      ;; we finished scanning blue units
+      ;; so the following units will be red
+      (set-local red? 1)))
   (return result))
 
 (func is-player-unit? (pos) =>
-  (return (= (call 'is-unit? pos) (const 'player-unit))))
+  (return (= (call 'is-unit? pos)
+             (if (call 'is-blue-turn?) =>
+               (then (const 'blue-unit))
+               (else (const 'red-unit))))))
 
 (func is-ennemy-unit? (pos) =>
-  (return (= (call 'is-unit? pos) (const 'ennemy-unit))))
+  (return (= (call 'is-unit? pos)
+             (if (call 'is-blue-turn?) =>
+               (then (const 'red-unit))
+               (else (const 'blue-unit))))))
 
 (func is-blocking-tile? (pos) =>
   (locals tile)
@@ -793,7 +804,7 @@
       (if (= unit #xFF) (break))))
   (return result))
 
-(func get-ennemy-units () =>
+(func get-red-units () =>
   (locals i addr unit result)
   (set-local i 0)
   (set-local result 0)
@@ -818,19 +829,19 @@
 ;; ============================================================================
 
 (func load-level (level)
-  (locals i units pos lvl ennemy?)
+  (locals i units pos lvl red?)
   (set-local i 0)
   (set-local units (call 'get-level-units level))
-  (set-local ennemy? 0)
+  (set-local red? 0)
   (for i (* 2 (const 'board-size)) 2
     (set-local pos (load-byte (+ units i)))
     (set-local lvl (load-byte (+ 1 (+ units i))))
     (store-byte (+ i (mem 'game 'current-units)) pos)
     (store-byte (+ 1 (+ i (mem 'game 'current-units))) lvl)
-    (if (and (= pos #xFF) ennemy?)
+    (if (and (= pos #xFF) red?)
       (break))
-    (if (and (= pos #xFF) (not ennemy?))
-      (set-local ennemy? 1))))
+    (if (and (= pos #xFF) (not red?))
+      (set-local red? 1))))
 
 (func next-level ())
 
@@ -844,7 +855,7 @@
 ;; fill the AI pile with actions to execute for the turn
 (func prepare-ai-moves ()
   (locals units)
-  (set-local units (call 'get-ennemy-units))
+  (set-local units (call 'get-red-units))
 
   ;; put the cursor on the choosen unit
   (store-byte (mem 'game 'ai-cursor-pos)
@@ -860,7 +871,7 @@
   (locals move)
   (set-local move (call 'pop-ai-move))
   (if (= move #xFF)
-    (then (call 'end-ennemy-turn))
+    (then (call 'end-red-turn))
     (else (call 'ai-keydown move))))
 
 (func push-ai-move (key)
@@ -890,12 +901,12 @@
 ;;                                GAME LOGIC
 ;; ============================================================================
 
-(func check-victory () =>
-  (return (= (load-byte (call 'get-ennemy-units)) #xFF)))
+(func check-blue-victory () =>
+  (return (= (load-byte (call 'get-red-units)) #xFF)))
 
 (func enter ()
   (locals cursor-pos current-action)
-  (set-local cursor-pos (load-byte (mem 'game 'cursor-pos)))
+  (set-local cursor-pos (load-byte (call 'get-cursor)))
   (set-local current-action (load-byte (mem 'game 'current-action)))
   (if (= current-action (const 'action-select))
     (call 'select cursor-pos))
@@ -919,7 +930,7 @@
 
 (func move (pos)
   (store-byte (call 'get-selected-unit) pos)
-  (call 'end-player-turn)
+  (call 'end-turn)
   (call 'cancel))
 
 (func attack (pos)
@@ -933,19 +944,24 @@
   (if (and (> coins 0) (< lvl 2))
     (store-byte lvl-addr (+ 1 lvl))
     (store-byte (mem 'game 'coins) (- coins 1))
-    (call 'end-player-turn))
+    (call 'end-turn))
   (call 'cancel))
 
-(func end-player-turn ()
-  (if (call 'check-victory)
+(func end-turn ()
+  (if (call 'is-blue-turn?)
+    (then (call 'end-blue-turn))
+    (else (call 'end-red-turn))))
+
+(func end-blue-turn ()
+  (if (call 'check-blue-victory)
     (then
       (call 'next-level))
     (else
       (call 'prepare-ai-moves)
-      (store-byte (mem 'game 'turn) (const 'ennemy-turn)))))
+      (store-byte (mem 'game 'turn) (const 'red-turn)))))
 
-(func end-ennemy-turn ()
-  (store-byte (mem 'game 'turn) (const 'player-turn)))
+(func end-red-turn ()
+  (store-byte (mem 'game 'turn) (const 'blue-turn)))
 
 (func hello ()
   (call 'log (mem 'messages) 12))
@@ -953,22 +969,14 @@
 (func render ()
   (call 'fill-screen (mem 'palette 'black))
   (call 'show-level (call 'get-current-level))
-
-  (if (call 'is-player-turn?)
-    (then (call 'show-cursor-top (load-byte (mem 'game 'cursor-pos))))
-    (else (call 'show-cursor-top (load-byte (mem 'game 'ai-cursor-pos)))))
-
+  (call 'show-cursor-top (load-byte (call 'get-cursor)))
   (call 'show-path)
   (call 'show-current-units)
-
-  (if (call 'is-player-turn?)
-    (then (call 'show-cursor-bot (load-byte (mem 'game 'cursor-pos))))
-    (else (call 'show-cursor-bot (load-byte (mem 'game 'ai-cursor-pos)))))
-
+  (call 'show-cursor-bot (load-byte (call 'get-cursor)))
   (call 'show-action))
 
 (func keydown (key)
-  (if (call 'is-player-turn?)
+  (if (call 'is-blue-turn?)
     (if (= key (const 'key-up))
       (call 'move-cursor-up))
     (if (= key (const 'key-down))
@@ -988,7 +996,7 @@
 
 (func update (frame)
   (if (and (= (% frame 15) 0)
-           (call 'is-ennemy-turn?))
+           (call 'is-red-turn?))
     (call 'ai-move)))
 
 (export "memory" (memory 0))
