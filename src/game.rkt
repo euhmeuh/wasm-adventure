@@ -26,6 +26,7 @@
   'no-selection #xFF
   'blue-unit 1
   'red-unit 2
+  'max-units-number 16
   'move-pile-len 8
   'ai-moves-len 16
   'action-upgrade 0
@@ -478,9 +479,9 @@
      3 3 0 0 1 1 1 1 1 2 2 0 3
      4 4 0 1 1 1 1 1 1 1 1 2 4
      ;; blue units
-     66 1 78 0 81 0 104 0 #xFFFF
+     66 1 78 0 81 0 104 0 #xFFFF #xFFFF #xFFFF #xFFFF
      ;; red units
-     51 0 74 2 88 1 89 1 103 0 #xFFFF
+     51 0 74 2 88 1 89 1 103 0 #xFFFF #xFFFF #xFFFF
      ))
   '(game 8192 (memstring 1
      level 0
@@ -500,9 +501,14 @@
 
      current-action #xFF ;; what the player can currently do when pressing the action button
 
-     ;; a list of blue units (pos, lvl, hp, atk), then the #xFFFFFFFF separator,
-     ;; then a list of red units (pos, lvl, hp, atk), then the ending #xFFFFFFFF
-     current-units #xFFFFFFFF #xFFFFFFFF))
+     current-units
+     ;; list of blue units (pos, lvl, hp, atk)
+     current-blue-units #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF
+                        #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF
+     ;; list of red units (pos, lvl, hp, atk)
+     current-red-units #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF
+                       #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF #xFF
+     current-units-end))
   '(screen 10240 0))
 
 ;; ============================================================================
@@ -605,23 +611,18 @@
                   (+ (mem 'tiles 'start) (* (const 'tile-size) tile)))))
 
 (func show-current-units ()
-  (locals i pos level units red-team?)
-  (set-local i 0)
-  (set-local units (mem 'game 'current-units))
-  (for i (* 4 (const 'board-size)) 4
-    (set-local pos (load-byte (+ units i)))
-    (set-local level (load-byte (+ units (+ 1 i))))
-    (if (and (= pos #xFF) red-team?)
-      (break))
-    (if (and (= pos #xFF) (not red-team?))
-      (set-local red-team? 1)
-      (set-local i (+ 4 i))
-      (continue))
-    (call 'sprite (call 'tile-x pos)
-                  (call 'tile-y (call 'row-up pos))
-                  (+ (mem 'units 'start)
-                     (* (+ level (* 3 red-team?))
-                        (const 'soldier-size))))))
+  (locals i pos level red?)
+  (set-local i (mem 'game 'current-units))
+  (for i (mem 'game 'current-units-end) 4
+    (set-local pos (load-byte i))
+    (set-local level (load-byte (+ 1 i)))
+    (set-local red? (>= i (mem 'game 'current-red-units)))
+    (if (!= pos #xFF)
+      (call 'sprite (call 'tile-x pos)
+                    (call 'tile-y (call 'row-up pos))
+                    (+ (mem 'units 'start)
+                       (* (+ level (* 3 red?))
+                          (const 'soldier-size)))))))
 
 (func show-unit-stats (unit)
   (locals pos hp atk)
@@ -785,23 +786,17 @@
 
 (func is-unit? (pos) =>
   (locals i unit red? result)
-  (set-local i 0)
+  (set-local i (mem 'game 'current-units))
   (set-local result 0)
   (set-local red? 0)
-  (for i (* 4 (const 'board-size)) 4
-    (set-local unit (load-byte (+ (mem 'game 'current-units) i)))
+  (for i (mem 'game 'current-units-end) 4
+    (set-local unit (load-byte i))
+    (set-local red? (>= i (mem 'game 'current-red-units)))
     (if (= unit pos)
       (set-local result (if red? =>
                           (then (const 'red-unit))
                           (else (const 'blue-unit))))
-      (break))
-    (if (and (= unit #xFF) red?)
-      ;; we finished scanning everything
-      (break))
-    (if (and (= unit #xFF) (not red?))
-      ;; we finished scanning blue units
-      ;; so the following units will be red
-      (set-local red? 1)))
+      (break)))
   (return result))
 
 (func is-player-unit? (pos) =>
@@ -846,29 +841,12 @@
 
 (func get-unit (pos) =>
   (locals i addr unit red-team? result)
-  (set-local i 0)
+  (set-local i (mem 'game 'current-units))
   (set-local result 0)
-  (for i (* 4 (const 'board-size)) 4
-    (set-local addr (+ (mem 'game 'current-units) i))
-    (set-local unit (load-byte addr))
+  (for i (mem 'game 'current-units-end) 4
+    (set-local unit (load-byte i))
     (if (= unit pos)
-      (set-local result addr)
-      (break))
-    (if (and (= unit #xFF) red-team?)
-      (break))
-    (if (and (= unit #xFF) (not red-team?))
-      (set-local red-team? 1)))
-  (return result))
-
-(func get-red-units () =>
-  (locals i addr unit result)
-  (set-local i 0)
-  (set-local result 0)
-  (for i (* 4 (const 'board-size)) 4
-    (set-local addr (+ (mem 'game 'current-units) i))
-    (set-local unit (load-byte addr))
-    (if (= unit #xFF)
-      (set-local result (+ 4 addr))
+      (set-local result i)
       (break)))
   (return result))
 
@@ -890,21 +868,21 @@
 ;; ============================================================================
 
 (func load-level (level)
-  (locals i units pos lvl red?)
+  (locals i units pos lvl target-addr)
   (set-local i 0)
   (set-local units (call 'get-level-units level))
-  (set-local red? 0)
-  (for i (* 2 (const 'board-size)) 2
+  (for i (* 2 (const 'max-units-number)) 2
     (set-local pos (load-byte (+ units i)))
     (set-local lvl (load-byte (+ 1 (+ units i))))
     ;; we multiply i by 2 because an in-game unit is 4 bytes
-    (store-byte (+ (* i 2) (mem 'game 'current-units)) pos)
-    (store-byte (+ 1 (+ (* i 2) (mem 'game 'current-units))) lvl)
-    (call 'init-unit (+ (* i 2) (mem 'game 'current-units)))
-    (if (and (= pos #xFF) red?)
-      (break))
-    (if (and (= pos #xFF) (not red?))
-      (set-local red? 1))))
+    (set-local target-addr (+ (* i 2) (mem 'game 'current-units)))
+    (if (= pos #xFF)
+      (then
+        (store target-addr #xFFFFFFFF))
+      (else
+        (store-byte target-addr pos)
+        (store-byte (+ target-addr 1) lvl)
+        (call 'init-unit target-addr)))))
 
 (func next-level ())
 
@@ -933,7 +911,7 @@
 ;; fill the AI pile with actions to execute for the turn
 (func prepare-ai-moves ()
   (locals units)
-  (set-local units (call 'get-red-units))
+  (set-local units (mem 'game 'current-red-units))
 
   ;; put the cursor on the choosen unit
   (store-byte (mem 'game 'ai-cursor-pos)
@@ -980,7 +958,7 @@
 ;; ============================================================================
 
 (func check-blue-victory () =>
-  (return (= (load-byte (call 'get-red-units)) #xFF)))
+  (return (= (load-byte (mem 'game 'current-red-units)) #xFF)))
 
 (func enter ()
   (locals cursor-pos current-action)
