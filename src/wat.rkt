@@ -48,11 +48,15 @@
   (#%module-begin
     (display `(module ,expr ... ,@(data-section)))))
 
-(define-syntax-rule (import path ... (name arg ...))
-  (import-impl '(path ...) 'name '(arg ...)))
+(define-syntax import
+  (syntax-rules (=>)
+    ((_ path ... (name arg ...))
+     (import-impl #f '(path ...) 'name '(arg ...)))
+    ((_ path ... (name arg ...) =>)
+     (import-impl #t '(path ...) 'name '(arg ...)))))
 
-(define (import-impl paths name args)
-  `(import ,@(map str paths) ,(func-signature name args)))
+(define (import-impl return paths name args)
+  `(import ,@(map str paths) ,(func-signature return name args)))
 
 (define-syntax-rule (export name object)
   (export-impl 'name 'object))
@@ -89,10 +93,11 @@
          ,@(map eval-loc locals)
          ,@(map var body)))
 
-(define (func-signature name args)
+(define (func-signature return name args)
   (define (eval-arg arg) `(param i32))
   `(func ,($ name)
-         ,@(map eval-arg args)))
+         ,@(map eval-arg args)
+         ,(result return)))
 
 (define (call name . args)
   `(call ,($ name) ,@(map var args)))
