@@ -559,7 +559,7 @@
       7 7 7 7 7 7
       7 7 7 7 7 7
      ))
-  '(actions 6672 (memstring 1
+  '(actions 6772 (memstring 1
      start
      upgrade 8 8
       0  0  0  7  7  0  0  0
@@ -763,10 +763,20 @@
   (return (+ (const 'board-offset-y) (* (/ i (const 'board-width)) 16))))
 
 (func row-up (pos) =>
-  (return (- pos (const 'board-width))))
+  (return (if (>= pos (const 'board-width)) =>
+            (then (- pos (const 'board-width)))
+            (else (+ pos 0)))))
 
 (func row-down (pos) =>
   (return (+ pos (const 'board-width))))
+
+(func col-left (pos) =>
+  (return (if (> pos 0) =>
+            (then (- pos 1))
+            (else (+ pos 0)))))
+
+(func col-right (pos) =>
+  (return (+ pos 1)))
 
 ;; ============================================================================
 ;;                                   DISPLAY
@@ -1131,6 +1141,37 @@
     (set-local pos (load-byte addr)))
   (return addr))
 
+;; scan 9 tiles for ennemy units
+(func scan-for-ennemy (pos) =>
+  (locals i unit tile result)
+  (set-local i 0)
+  (set-local unit 0)
+  (set-local tile pos)
+  (set-local result #xFF)
+  (for i 9 1
+    (set-local tile (+ (+ (% i 3)
+                          (* (const 'board-width) (/ i 3)))
+                       pos))
+    (if (call 'is-ennemy-unit? tile)
+      (set-local result tile)
+      (break)))
+  (return result))
+
+;; scan 9 tiles for free space to move
+(func scan-for-space (pos) =>
+  (locals i tile result)
+  (set-local i 0)
+  (set-local result #xFF)
+  (for i 9 1
+    (set-local tile (+ (+ (% i 3)
+                          (* (const 'board-width) (/ i 3)))
+                       pos))
+    (if (and (not (call 'is-blocking-tile? tile))
+             (not (call 'is-unit? tile)))
+      (set-local result tile)
+      (break)))
+  (return result))
+
 (func clear-ai-moves ()
   (store (mem 'game 'ai-moves) #xFFFFFFFF)
   (store (+ 4 (mem 'game 'ai-moves)) #xFFFFFFFF)
@@ -1139,15 +1180,62 @@
 
 ;; fill the AI pile with actions to execute for the turn
 (func prepare-ai-moves ()
+  (locals pos scan-start ennemy free-tile)
   ;; put the cursor on a random unit
-  (store-byte (mem 'game 'ai-cursor-pos)
-              (load-byte (call 'get-random-unit (mem 'game 'current-red-units))))
+  (set-local pos (load-byte (call 'get-random-unit (mem 'game 'current-red-units))))
+  (store-byte (mem 'game 'ai-cursor-pos) pos)
 
   ;; choose what to do
   (call 'clear-ai-moves)
-  (call 'push-ai-move (const 'key-a))
-  (call 'push-ai-move (const 'key-left))
-  (call 'push-ai-move (const 'key-a)))
+  (call 'push-ai-move (const 'key-a)) ;; select current unit
+
+  ;; we set the scanning position 1 tile up & 2 tiles left from current position
+  ;; (unless we're already top to prevent out of bound)
+  (set-local scan-start (call 'row-up (call 'col-left (call 'col-left pos))))
+  (call 'log-num pos)
+  (call 'log-num scan-start)
+  (set-local ennemy (call 'scan-for-ennemy scan-start))
+  (if (!= ennemy #xFF)
+    (then
+      (call 'ai-add-moves-between pos ennemy)
+      (call 'push-ai-move (const 'key-a)))
+    (else
+      (set-local free-tile (call 'scan-for-space scan-start))
+      (if (!= free-tile #xFF)
+        (then (call 'ai-add-moves-between pos free-tile)
+              (call 'push-ai-move (const 'key-a)))
+        (else
+          ;; retry with another unit
+          (call 'prepare-ai-moves))))))
+
+;; push keys to the ai pile until we get to the wanted pos
+(func ai-add-moves-between (start target)
+  (locals move-count hdir vdir x y tx ty)
+  (set-local move-count 3)
+  (set-local x (% start (const 'board-width)))
+  (set-local y (/ start (const 'board-width)))
+  (set-local tx (% target (const 'board-width)))
+  (set-local ty (/ target (const 'board-width)))
+  (if (< x tx)
+    (then (set-local hdir (const 'key-right)))
+    (else (set-local hdir (const 'key-left))))
+  (if (< y ty)
+    (then (set-local vdir (const 'key-down)))
+    (else (set-local vdir (const 'key-up))))
+  ;; horizontal
+  (while (and (> move-count 0) (!= x tx))
+    (call 'push-ai-move hdir)
+    (if (= hdir (const 'key-left))
+      (then (set-local x (- x 1)))
+      (else (set-local x (+ x 1))))
+    (set-local move-count (- move-count 1)))
+  ;; vertical
+  (while (and (> move-count 0) (!= y ty))
+    (call 'push-ai-move vdir)
+    (if (= vdir (const 'key-up))
+      (then (set-local y (- y 1)))
+      (else (set-local y (+ y 1))))
+    (set-local move-count (- move-count 1))))
 
 ;; pick an action and execute it
 (func ai-move ()
@@ -1260,8 +1348,8 @@
     (then
       (call 'next-level))
     (else
-      (call 'prepare-ai-moves)
-      (store-byte (mem 'game 'turn) (const 'red-turn)))))
+      (store-byte (mem 'game 'turn) (const 'red-turn))
+      (call 'prepare-ai-moves))))
 
 (func end-red-turn ()
   (if (call 'check-red-victory)
