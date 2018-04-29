@@ -435,6 +435,15 @@
       7 10  7  7  7  7 10  7
       0  7 10 10 10 10  7  0
       0  0  7  7  7  7  0  0
+     level-icon 8 8
+      7  7  7  0  0  7  7  7
+      7  5  7  7  7  7  5  7
+      7  5  5  5  5  5  5  7
+      7  6  6  6  6  6  6  7
+      7  6  6  5  5  6  6  7
+      7  6  5  4  4  5  6  7
+      7  6  5  4  4  5  6  7
+      7  7  7  7  7  7  7  7
      numbers
      num0 6 10
       7 7 7 7 7 7
@@ -547,7 +556,7 @@
       7 7 7 7 7 7
       7 7 7 7 7 7
      ))
-  '(actions 6932 (memstring 1
+  '(actions 6672 (memstring 1
      start
      upgrade 8 8
       0  0  0  7  7  0  0  0
@@ -852,6 +861,10 @@
                                                           (/ (% amount 100) 10))))
   (call 'sprite (+ x 30) (+ y 3) (+ (mem 'ui 'numbers) (* (const 'num-size)
                                                           (% (% amount 100) 10)))))
+
+(func show-level-number (x y level)
+  (call 'sprite (+ x 4) (+ y 4) (mem 'ui 'level-icon))
+  (call 'sprite (+ x 14) (+ y 3) (+ (mem 'ui 'numbers) (* (const 'num-size) level))))
 
 ;; ============================================================================
 ;;                                   CURSOR
@@ -1271,6 +1284,7 @@
 (func render ()
   (call 'fill-screen (mem 'palette 'black))
   (call 'show-level (call 'get-current-level))
+  (call 'show-level-number 98 201 (load-byte (mem 'game 'level)))
   (call 'show-coins 6 3 (load-byte (mem 'game 'blue-coins)))
   (call 'show-coins 178 3 (load-byte (mem 'game 'red-coins)))
   (call 'show-cursor-top (load-byte (call 'get-cursor)))
