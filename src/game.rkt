@@ -42,7 +42,7 @@
   'small-unit-hp 2
   'small-unit-atk 1
   ;; medium unit has medium ATK but big HP
-  'medium-unit-hp 3
+  'medium-unit-hp 4
   'medium-unit-atk 2
   ;; big unit has a lot of ATK, but few HP
   'big-unit-hp 2
@@ -609,8 +609,8 @@
   '(game 8192 (memstring 1
      level 0
      turn 0
-     blue-coins 123
-     red-coins 145
+     blue-coins 0
+     red-coins 0
      cursor-pos 66
      ai-cursor-pos 70
 
@@ -1149,16 +1149,23 @@
   (call 'end-turn))
 
 (func attack (pos)
-  (locals unit atk target target-hp)
+  (locals unit atk target target-lvl target-hp)
   (set-local unit (call 'get-selected-unit))
   (set-local atk (load-byte (+ unit 3)))
   (set-local target (call 'get-unit pos))
+  (set-local target-lvl (load-byte (+ target 1)))
   (set-local target-hp (load-byte (+ target 2)))
   (if (<= target-hp atk)
-    (then (call 'remove-unit target))
+    (then (call 'remove-unit target)
+          (call 'earn-coins (+ target-lvl 1)))
     (else (store-byte (+ target 2) (- target-hp atk))))
   (call 'cancel)
   (call 'end-turn))
+
+(func earn-coins (amount)
+  (locals coins-addr)
+  (set-local coins-addr (call 'get-coins))
+  (store-byte coins-addr (+ (load-byte coins-addr) amount)))
 
 (func upgrade ()
   (locals coins unit-addr lvl)
