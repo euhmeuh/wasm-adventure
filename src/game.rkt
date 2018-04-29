@@ -634,9 +634,9 @@
      0 3 3 3 0 1 1 1 2 2 0 0 0
      0 4 4 4 3 1 1 2 2 0 2 2 2
      ;; blue units
-     66 1 #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF
+     66 1 80 0 #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF
      ;; red units
-     51 0 #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF
+     51 0 77 1 #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF
 
      level2
      3 3 0 0 0 0 0 0 0 0 0 0 3
@@ -651,9 +651,9 @@
      2 2 2 2 1 1 1 1 1 2 0 0 0
      2 2 2 2 2 2 2 0 2 0 0 0 0
      ;; blue units
-     66 1 #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF
+     66 1 79 0 #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF
      ;; red units
-     51 0 #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF
+     51 0 77 1 #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF
      ))
   '(game 8192 (memstring 1
      level 0
@@ -1148,9 +1148,9 @@
   (set-local unit 0)
   (set-local tile pos)
   (set-local result #xFF)
-  (for i 9 1
-    (set-local tile (+ (+ (% i 3)
-                          (* (const 'board-width) (/ i 3)))
+  (for i 15 1
+    (set-local tile (+ (+ (% i 5)
+                          (* (const 'board-width) (/ i 5)))
                        pos))
     (if (call 'is-ennemy-unit? tile)
       (set-local result tile)
@@ -1162,9 +1162,9 @@
   (locals i tile result)
   (set-local i 0)
   (set-local result #xFF)
-  (for i 9 1
-    (set-local tile (+ (+ (% i 3)
-                          (* (const 'board-width) (/ i 3)))
+  (for i 15 1
+    (set-local tile (+ (+ (% i 5)
+                          (* (const 'board-width) (/ i 5)))
                        pos))
     (if (and (not (call 'is-blocking-tile? tile))
              (not (call 'is-unit? tile)))
@@ -1189,9 +1189,8 @@
   (call 'clear-ai-moves)
   (call 'push-ai-move (const 'key-a)) ;; select current unit
 
-  ;; we set the scanning position 1 tile up & 2 tiles left from current position
-  ;; (unless we're already top to prevent out of bound)
-  (set-local scan-start (call 'row-up (call 'col-left (call 'col-left pos))))
+  ;; we set the scanning position 2 tiles left from current position
+  (set-local scan-start (call 'col-left (call 'col-left pos)))
   (call 'log-num pos)
   (call 'log-num scan-start)
   (set-local ennemy (call 'scan-for-ennemy scan-start))
@@ -1242,7 +1241,9 @@
   (locals move)
   (set-local move (call 'pop-ai-move))
   (if (= move #xFF)
-    (then (call 'end-red-turn))
+    (then
+      (call 'cancel)
+      (call 'end-red-turn))
     (else (call 'ai-keydown move))))
 
 (func push-ai-move (key)
@@ -1400,7 +1401,7 @@
   (call 'update-action))
 
 (func update (frame)
-  (if (and (= (% frame 15) 0)
+  (if (and (= (% frame 10) 0)
            (call 'is-red-turn?))
     (call 'ai-move)))
 
