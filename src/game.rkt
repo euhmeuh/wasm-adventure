@@ -12,6 +12,7 @@
   'tile-size 258
   'soldier-size 514
   'action-size 66
+  'num-size 62
   'key-up 0
   'key-down 1
   'key-left 2
@@ -423,8 +424,128 @@
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
       0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+     coin-icon 8 8
+      0  0  7  7  7  7  0  0
+      0  7 10 10 10 10  7  0
+      7 10  7 10 10  7 10  7
+      7 10 10  0  0  7 10  7
+      7 10 10  0  0  7 10  7
+      7 10  7  7  7  7 10  7
+      0  7 10 10 10 10  7  0
+      0  0  7  7  7  7  0  0
+     numbers
+     num0 6 10
+      7 7 7 7 7 7
+      7 7 7 7 7 7
+      7 7 0 0 7 7
+      7 7 0 0 7 7
+      7 7 0 0 7 7
+      7 7 0 0 7 7
+      7 7 0 0 7 7
+      7 7 0 0 7 7
+      7 7 7 7 7 7
+      7 7 7 7 7 7
+     num1 6 10
+      0 0 7 7 0 0
+      0 0 7 7 0 0
+      0 0 7 7 0 0
+      0 0 7 7 0 0
+      0 0 7 7 0 0
+      0 0 7 7 0 0
+      0 0 7 7 0 0
+      0 0 7 7 0 0
+      0 0 7 7 0 0
+      0 0 7 7 0 0
+     num2 6 10
+      7 7 7 7 7 7
+      7 7 7 7 7 7
+      0 0 0 0 7 7
+      0 0 0 0 7 7
+      7 7 7 7 7 7
+      7 7 7 7 7 7
+      7 7 0 0 0 0
+      7 7 0 0 0 0
+      7 7 7 7 7 7
+      7 7 7 7 7 7
+     num3 6 10
+      7 7 7 7 7 7
+      7 7 7 7 7 7
+      0 0 0 0 7 7
+      0 0 0 0 7 7
+      7 7 7 7 7 7
+      7 7 7 7 7 7
+      0 0 0 0 7 7
+      0 0 0 0 7 7
+      7 7 7 7 7 7
+      7 7 7 7 7 7
+     num4 6 10
+      7 7 0 0 7 7
+      7 7 0 0 7 7
+      7 7 0 0 7 7
+      7 7 0 0 7 7
+      7 7 7 7 7 7
+      7 7 7 7 7 7
+      0 0 0 0 7 7
+      0 0 0 0 7 7
+      0 0 0 0 7 7
+      0 0 0 0 7 7
+     num5 6 10
+      7 7 7 7 7 7
+      7 7 7 7 7 7
+      7 7 0 0 0 0
+      7 7 0 0 0 0
+      7 7 7 7 7 7
+      7 7 7 7 7 7
+      0 0 0 0 7 7
+      0 0 0 0 7 7
+      7 7 7 7 7 7
+      7 7 7 7 7 7
+     num6 6 10
+      7 7 7 7 7 7
+      7 7 7 7 7 7
+      7 7 0 0 0 0
+      7 7 0 0 0 0
+      7 7 7 7 7 7
+      7 7 7 7 7 7
+      7 7 0 0 7 7
+      7 7 0 0 7 7
+      7 7 7 7 7 7
+      7 7 7 7 7 7
+     num7 6 10
+      7 7 7 7 7 7
+      7 7 7 7 7 7
+      0 0 0 0 7 7
+      0 0 0 0 7 7
+      0 0 0 0 7 7
+      0 0 0 0 7 7
+      0 0 0 0 7 7
+      0 0 0 0 7 7
+      0 0 0 0 7 7
+      0 0 0 0 7 7
+     num8 6 10
+      7 7 7 7 7 7
+      7 7 7 7 7 7
+      7 7 0 0 7 7
+      7 7 0 0 7 7
+      7 7 7 7 7 7
+      7 7 7 7 7 7
+      7 7 0 0 7 7
+      7 7 0 0 7 7
+      7 7 7 7 7 7
+      7 7 7 7 7 7
+     num9 6 10
+      7 7 7 7 7 7
+      7 7 7 7 7 7
+      7 7 0 0 7 7
+      7 7 0 0 7 7
+      7 7 7 7 7 7
+      7 7 7 7 7 7
+      0 0 0 0 7 7
+      0 0 0 0 7 7
+      7 7 7 7 7 7
+      7 7 7 7 7 7
      ))
-  '(actions 6500 (memstring 1
+  '(actions 6932 (memstring 1
      start
      upgrade 8 8
       0  0  0  7  7  0  0  0
@@ -488,8 +609,8 @@
   '(game 8192 (memstring 1
      level 0
      turn 0
-     blue-coins 10
-     red-coins 10
+     blue-coins 123
+     red-coins 145
      cursor-pos 66
      ai-cursor-pos 70
 
@@ -685,6 +806,15 @@
                   (call 'tile-y (call 'row-down cursor-pos))
                   (+ (mem 'actions 'start)
                      (* current-action (const 'action-size))))))
+
+(func show-coins (x y amount)
+  (call 'sprite (+ x 4) (+ y 4) (mem 'ui 'coin-icon))
+  (call 'sprite (+ x 14) (+ y 3) (+ (mem 'ui 'numbers) (* (const 'num-size)
+                                                          (/ amount 100))))
+  (call 'sprite (+ x 22) (+ y 3) (+ (mem 'ui 'numbers) (* (const 'num-size)
+                                                          (/ (% amount 100) 10))))
+  (call 'sprite (+ x 30) (+ y 3) (+ (mem 'ui 'numbers) (* (const 'num-size)
+                                                          (% (% amount 100) 10)))))
 
 ;; ============================================================================
 ;;                                   CURSOR
@@ -1068,6 +1198,8 @@
 (func render ()
   (call 'fill-screen (mem 'palette 'black))
   (call 'show-level (call 'get-current-level))
+  (call 'show-coins 6 3 (load-byte (mem 'game 'blue-coins)))
+  (call 'show-coins 178 3 (load-byte (mem 'game 'red-coins)))
   (call 'show-cursor-top (load-byte (call 'get-cursor)))
   (call 'show-path)
   (call 'show-current-units)
