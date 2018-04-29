@@ -19,6 +19,7 @@
          data
          mem
          data-section
+         while
          for
          break
          continue
@@ -127,6 +128,13 @@
        ,@body
        (set_local ,($ counter)
          ,(add counter step))
+       (br $loop))))
+
+(define (while condition . body)
+  `(loop $loop
+     (block $done
+       (br_if $done ,(not condition))
+       ,@body
        (br $loop))))
 
 (define (break)
