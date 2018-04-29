@@ -101,10 +101,15 @@
             var string = new TextDecoder('utf8').decode(bytes);
             console.log(string);
           },
-          lognum: function(i) {
+          lognum: function (i) {
             console.log(`Value: ${i}`);
           }
         };
+        engine.importObject.math = {
+          random: function (i) {
+            return Math.floor((Math.random() * i));
+          }
+        }
         engine.importObject.game = {
           victory: victoryScreen,
           gameover: defeatScreen,

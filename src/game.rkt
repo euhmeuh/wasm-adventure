@@ -4,6 +4,7 @@
 (import "console" "lognum" (log-num i))
 (import "game" "victory" (victory))
 (import "game" "gameover" (game-over))
+(import "math" "random" (random-num i) =>)
 
 '(memory 1)
 
@@ -1121,11 +1122,13 @@
 ;;                                    AI
 ;; ============================================================================
 
-(func find-best-unit (units) =>
-  (locals i pos result)
+(func get-random-unit (units) =>
+  (locals i len rand pos result)
   (set-local i units)
+  (set-local len (+ i 32)) ;; we scan half the units to get only one team
+  (set-local rand (call 'random-num 8))
   (set-local result 0)
-  (for i (mem 'game 'current-units-end) 4
+  (for i len 4
     (set-local pos (load-byte i))
     (if (!= pos #xFF)
       (set-local result i)
@@ -1140,12 +1143,9 @@
 
 ;; fill the AI pile with actions to execute for the turn
 (func prepare-ai-moves ()
-  (locals units)
-  (set-local units (mem 'game 'current-red-units))
-
-  ;; put the cursor on the choosen unit
+  ;; put the cursor on a random unit
   (store-byte (mem 'game 'ai-cursor-pos)
-              (load-byte (call 'find-best-unit units)))
+              (load-byte (call 'get-random-unit (mem 'game 'current-red-units))))
 
   ;; choose what to do
   (call 'clear-ai-moves)
