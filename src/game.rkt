@@ -1123,17 +1123,13 @@
 ;; ============================================================================
 
 (func get-random-unit (units) =>
-  (locals i len rand pos result)
-  (set-local i units)
-  (set-local len (+ i 32)) ;; we scan half the units to get only one team
-  (set-local rand (call 'random-num 8))
-  (set-local result 0)
-  (for i len 4
-    (set-local pos (load-byte i))
-    (if (!= pos #xFF)
-      (set-local result i)
-      (break)))
-  (return result))
+  (locals addr pos)
+  (set-local addr units)
+  (set-local pos #xFF)
+  (while (= pos #xFF)
+    (set-local addr (+ units (* 4 (call 'random-num 8))))
+    (set-local pos (load-byte addr)))
+  (return addr))
 
 (func clear-ai-moves ()
   (store (mem 'game 'ai-moves) #xFFFFFFFF)
