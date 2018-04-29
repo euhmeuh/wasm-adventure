@@ -33,11 +33,20 @@
       .center {
         text-align: center;
       }
+      .title-screen {
+        background-image: url("static/title.png");
+      }
+      .victory-screen {
+        background-image: url("static/victory.png");
+      }
+      .defeat-screen {
+        background-image: url("static/defeat.png");
+      }
     </style>
   </head>
   <body>
     <div id="console" class="screen-centered">
-      <canvas id="screen-canvas" width="220" height="220">
+      <canvas id="screen-canvas" class="title-screen" width="220" height="220">
         Please use a browser that supports canvas.
       </canvas>
     </div>
@@ -66,6 +75,8 @@
 
       let canvas = document.getElementById('screen-canvas');
       let engine = null;
+      let gameStarted = false;
+      let fc = null;
       if (canvas.getContext) {
         engine = init();
         load(engine).then(() => {
@@ -94,6 +105,10 @@
             console.log(`Value: ${i}`);
           }
         };
+        engine.importObject.game = {
+          victory: victoryScreen,
+          gameover: defeatScreen,
+        }
         return engine;
       }
 
@@ -118,12 +133,11 @@
                                                                engine.height);
         engine.instance.exports.hello();
 
-        let fc = new FpsCtrl(30, (e) => {
+        fc = new FpsCtrl(30, (e) => {
           engine.instance.exports.render();
           engine.canvasCtx.putImageData(engine.imageData, 0, 0);
           engine.instance.exports.update(e.frame % 0xFFFFFFFF);
         });
-        fc.start();
       }
 
       function initKeyboard (engine) {
@@ -138,9 +152,28 @@
         document.addEventListener('keydown', function(event) {
           let key = find(keyCodes, (k) => k.val == event.keyCode);
           if (key) {
-            engine.instance.exports.keydown(key.game);
+            if (gameStarted) {
+              engine.instance.exports.keydown(key.game);
+            } else {
+              fc.start();
+              gameStarted = true;
+            }
           }
         });
+      }
+
+      function victoryScreen () {
+        fc.pause();
+        engine.canvasCtx.clearRect(0, 0, engine.width, engine.height);
+        canvas.classList.remove("title-screen");
+        canvas.classList.add("victory-screen");
+      }
+
+      function defeatScreen () {
+        fc.pause();
+        engine.canvasCtx.clearRect(0, 0, engine.width, engine.height);
+        canvas.classList.remove("title-screen");
+        canvas.classList.add("defeat-screen");
       }
     </script>
   </body>
