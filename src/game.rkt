@@ -12,6 +12,7 @@
   'tile-size 258
   'soldier-size 514
   'action-size 66
+  'level-size 175
   'num-size 62
   'key-up 0
   'key-down 1
@@ -46,7 +47,8 @@
   'medium-unit-atk 2
   ;; big unit has a lot of ATK, but few HP
   'big-unit-hp 2
-  'big-unit-atk 3)
+  'big-unit-atk 3
+  'number-of-levels 3)
 
 (data
   '(width 0 0)
@@ -585,6 +587,7 @@
       8  8  0  0  0  0  8  8
      ))
   '(levels 7189 (memstring 1
+     start
      level0
      ;; grass 0
      ;; water 1
@@ -605,6 +608,40 @@
      66 1 78 0 81 0 104 0 #xFFFF #xFFFF #xFFFF #xFFFF
      ;; red units
      51 0 74 2 88 1 89 1 103 0 #xFFFF #xFFFF #xFFFF
+
+     level1
+     0 0 0 2 2 2 0 0 0 0 2 3 3
+     0 0 2 0 2 2 0 0 0 0 2 4 4
+     0 2 0 2 0 2 2 0 0 0 0 0 0
+     0 0 0 0 0 1 2 2 0 0 0 0 0
+     0 0 0 0 0 1 1 1 1 0 0 0 0
+     0 0 0 0 0 1 1 1 2 0 0 0 0
+     0 0 0 0 0 0 1 2 0 0 0 0 0
+     0 0 0 0 0 0 2 0 0 0 0 0 0
+     0 0 0 0 0 0 1 1 2 0 0 0 0
+     0 3 3 3 0 1 1 1 2 2 0 0 0
+     0 4 4 4 3 1 1 2 2 0 2 2 2
+     ;; blue units
+     66 1 #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF
+     ;; red units
+     51 0 #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF
+
+     level2
+     0 0 0 2 2 2 0 0 0 0 2 3 3
+     0 0 2 0 2 2 0 0 0 0 2 4 4
+     0 2 0 2 0 2 2 0 0 0 0 0 0
+     0 0 0 0 0 1 2 2 0 0 0 0 0
+     0 0 0 0 0 1 1 1 1 0 0 0 0
+     0 0 0 0 0 1 1 1 2 0 0 0 0
+     0 0 0 0 0 0 1 2 0 0 0 0 0
+     0 0 0 0 0 0 2 0 0 0 0 0 0
+     0 0 0 0 0 0 1 1 2 0 0 0 0
+     0 3 3 3 0 1 1 1 2 2 0 0 0
+     0 4 4 4 3 1 1 2 2 0 2 2 2
+     ;; blue units
+     66 1 #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF
+     ;; red units
+     51 0 #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF #xFFFF
      ))
   '(game 8192 (memstring 1
      level 0
@@ -703,7 +740,7 @@
                     (const 'page-size)))
   '(drop)
   ;; load first level
-  (call 'load-level (mem 'levels 'level0)))
+  (call 'load-level 0))
 
 ;; get tile x position on screen based on the tile index
 (func tile-x (i) =>
@@ -957,10 +994,11 @@
              #xFF)))
 
 (func any-units-left? (units) =>
-  (locals i pos result)
+  (locals i len pos result)
   (set-local i units)
+  (set-local len (+ i 32)) ;; we scan half the units to get only one team
   (set-local result 0)
-  (for i (mem 'game 'current-units-end) 4
+  (for i len 4
     (set-local pos (load-byte i))
     (if (!= pos #xFF)
       (set-local result 1)
@@ -994,9 +1032,10 @@
   (return result))
 
 (func get-current-level () =>
-  ;;(locals level)
-  ;;(set-local level (load-byte (mem 'game 'level)))
-  (return (mem 'levels 'level0)))
+  (return (call 'get-level (load-byte (mem 'game 'level)))))
+
+(func get-level (n) =>
+  (return (+ (mem 'levels 'start) (* (const 'level-size) n))))
 
 (func get-level-units (level) =>
   (return (+ level (const 'board-size))))
@@ -1010,9 +1049,10 @@
 ;;                                   LOAD
 ;; ============================================================================
 
-(func load-level (level)
-  (locals i units pos lvl target-addr)
+(func load-level (n)
+  (locals i level units pos lvl target-addr)
   (set-local i 0)
+  (set-local level (call 'get-level n))
   (set-local units (call 'get-level-units level))
   (for i (* 2 (const 'max-units-number)) 2
     (set-local pos (load-byte (+ units i)))
@@ -1027,7 +1067,26 @@
         (store-byte (+ target-addr 1) lvl)
         (call 'init-unit target-addr)))))
 
+(func reset-everything ()
+  (store-byte (mem 'game 'blue-coins) 0)
+  (store-byte (mem 'game 'red-coins) 0)
+  (store-byte (mem 'game 'turn) (const 'blue-turn))
+  (store-byte (mem 'game 'cursor-pos) 66)
+  (store-byte (mem 'game 'ai-cursor-pos) 70)
+  (call 'cancel)
+  (call 'clear-ai-moves))
+
 (func next-level ()
+  (locals level)
+  (set-local level (+ (load-byte (mem 'game 'level)) 1))
+  (if (>= level (const 'number-of-levels))
+    (then (call 'victory))
+    (else
+      (store-byte (mem 'game 'level) level)
+      (call 'reset-everything)
+      (call 'load-level level))))
+
+(func victory ()
   (call 'log (mem 'message-victory) 8))
 
 (func game-over ()
@@ -1064,6 +1123,12 @@
       (break)))
   (return result))
 
+(func clear-ai-moves ()
+  (store (mem 'game 'ai-moves) #xFFFFFFFF)
+  (store (+ 4 (mem 'game 'ai-moves)) #xFFFFFFFF)
+  (store (+ 8 (mem 'game 'ai-moves)) #xFFFFFFFF)
+  (store (+ 12 (mem 'game 'ai-moves)) #xFFFFFFFF))
+
 ;; fill the AI pile with actions to execute for the turn
 (func prepare-ai-moves ()
   (locals units)
@@ -1074,6 +1139,7 @@
               (load-byte (call 'find-best-unit units)))
 
   ;; choose what to do
+  (call 'clear-ai-moves)
   (call 'push-ai-move (const 'key-a))
   (call 'push-ai-move (const 'key-left))
   (call 'push-ai-move (const 'key-a)))
