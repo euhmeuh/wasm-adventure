@@ -10,8 +10,7 @@
   (for-each
     (lambda (e)
       (hash-set! *constants* (car e) (cadr e)))
-    (cut entries 2))
-  *noop*)
+    (pack entries 2)))
 
 (define (const x)
   (var (hash-ref *constants* x)))

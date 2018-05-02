@@ -6,8 +6,6 @@
 (import "game" "gameover" (game-over))
 (import "math" "random" (random-num i) =>)
 
-'(memory 1)
-
 (constants
   'page-size #x10000
   'pixel-size 4
@@ -719,7 +717,7 @@
   (locals cursor) ;; write position in memory
 
   (if (!= color (mem 'palette 'transparent))
-    (set-local cursor (+ (mem 'screen) (* pos 4))) ;; 4 is pixel size
+    (set-local cursor (+ (mem 'screen) (* pos (const 'pixel-size))))
     ;; red component
     (store-byte cursor (load-byte color))
     ;; green component
@@ -731,7 +729,7 @@
 
 (func plot (x y color)
   ;;; draw a pixel at the given coordinates
-  (call 'pixel (+ x (* y (load (mem 'height)))) color))
+  (call 'pixel (+ x (* y (load (mem 'width)))) color))
 
 (func sprite (x y index)
   (locals width height color i)
@@ -1406,8 +1404,8 @@
     (call 'ai-move)))
 
 (export "memory" (memory 0))
-(export "init" (func $init))
-(export "render" (func $render))
-(export "keydown" (func $player-keydown))
-(export "update" (func $update))
-(export "hello" (func $hello))
+(export "init" (func init))
+(export "render" (func render))
+(export "keydown" (func player-keydown))
+(export "update" (func update))
+(export "hello" (func hello))

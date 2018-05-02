@@ -1,10 +1,5 @@
 #lang racket
 
-(require
-  "utils.rkt"
-  "memory.rkt"
-  "constants.rkt")
-
 (provide (except-out (all-from-out racket)
                      #%module-begin
                      + - / * = < <= > >= if)
@@ -34,7 +29,7 @@
          (rename-out (le <=))
          (rename-out (gt >))
          (rename-out (ge >=))
-         (rename-out (if% if))
+         (rename-out (wasm-if if))
          not
          and
          or
@@ -45,60 +40,107 @@
          store
          store-byte)
 
+(require
+  (for-syntax
+    racket/base
+    racket/syntax
+    syntax/stx
+    syntax/parse)
+  "utils.rkt"
+  "memory.rkt"
+  "constants.rkt")
+
+(begin-for-syntax
+  (define-splicing-syntax-class maybe-returns
+    #:datum-literals (=>)
+    (pattern (~seq =>)
+             #:with returns? #'#t)
+    (pattern (~seq)
+             #:with returns? #'#f))
+
+  (define-splicing-syntax-class maybe-locals
+    #:datum-literals (locals)
+    (pattern (~seq (locals loc:id ...))
+             #:with locs #'(loc ...))
+    (pattern (~seq)
+             #:with locs #'())))
+
+(define import-section '())
+(define function-section '())
+(define export-section '())
+
 (define-syntax-rule (module-begin expr ...)
   (#%module-begin
-    (display `(module ,expr ... ,@(data-section)))))
+    expr ...
+    (display `(module ,@import-section
+                      (memory 1)
+                      ,@function-section
+                      ,@export-section
+                      ,@(data-section)))))
 
-(define-syntax import
-  (syntax-rules (=>)
-    ((_ path ... (name arg ...))
-     (import-impl #f '(path ...) 'name '(arg ...)))
-    ((_ path ... (name arg ...) =>)
-     (import-impl #t '(path ...) 'name '(arg ...)))))
+(define callables '())
 
-(define (import-impl return paths name args)
-  `(import ,@(map str paths) ,(func-signature return name args)))
+(define (add-callable func-name)
+  (set! callables (cons func-name callables)))
 
-(define-syntax-rule (export name object)
-  (export-impl 'name 'object))
+(define-syntax (import stx)
+  (syntax-parse stx
+    [(_ path ... (name arg ...) mr:maybe-returns)
+     #'(add-import '(path ...) 'name '(arg ...) #:returns? mr.returns?)]))
 
-(define (export-impl name object)
-  `(export ,(str name) ,object))
+(define (add-import paths name args #:returns? [returns? #f])
+  (set! import-section
+        (cons `(import ,@(map str paths)
+                       ,(func-signature name args #:returns? returns?))
+              import-section))
+  (add-callable name))
 
-(define-syntax func
-  (syntax-rules (=> locals)
-    ((_ name (arg ...) => (locals loc ...) body ...)
-     (let ((arg 'arg) ... (loc 'loc) ...)
-       (func-impl #t 'name '(arg ...) '(loc ...) body ...)))
-
-    ((_ name (arg ...) (locals loc ...) body ...)
-     (let ((arg 'arg) ... (loc 'loc) ...)
-       (func-impl #f 'name '(arg ...) '(loc ...) body ...)))
-
-    ((_ name (arg ...) => body ...)
-     (let ((arg 'arg) ...)
-       (func-impl #t 'name '(arg ...) '() body ...)))
-
-    ((_ name (arg ...) body ...)
-     (let ((arg 'arg) ...)
-       (func-impl #f 'name '(arg ...) '() body ...)))))
-
-(define (func-impl return name args locals . body)
-  (define (eval-arg arg)
-    `(param ,($ arg) i32))
-  (define (eval-loc loc)
-    `(local ,($ loc) i32))
-  `(func ,($ name)
-         ,@(map eval-arg args)
-         ,(result return)
-         ,@(map eval-loc locals)
-         ,@(map var body)))
-
-(define (func-signature return name args)
+(define (func-signature name args #:returns? [returns? #f])
   (define (eval-arg arg) `(param i32))
   `(func ,($ name)
          ,@(map eval-arg args)
-         ,(result return)))
+         ,@(result-or-none returns?)))
+
+(define-syntax export
+  (syntax-rules (memory func)
+    [(_ name-out (memory num))
+     (add-memory-export 'name-out num)]
+    [(_ name-out (func name))
+     (add-function-export 'name-out 'name)]))
+
+(define (add-memory-export name-out num)
+  (set! export-section
+        (cons `(export ,(str name-out) (memory ,num))
+              export-section)))
+
+(define (add-function-export name-out name)
+  (set! export-section
+        (cons `(export ,(str name-out) (func ,($ name)))
+              export-section)))
+
+(define-syntax (func stx)
+  (syntax-parse stx
+    [(_ name (arg ...) mr:maybe-returns ml:maybe-locals body ...)
+     #`(let ([arg 'arg] ... ;; every arg in the body of the function is bound to its symbol
+             #,@(stx-map (lambda (a) #`(#,a '#,a))
+                         #'ml.locs))
+         (add-function 'name '(arg ...) 'ml.locs #:returns? mr.returns? body ...))]))
+
+(define (add-function name args locals #:returns? [returns? #f] . body)
+  (set! function-section
+        (cons `(func ,($ name)
+                 ,@(map param args)
+                 ,@(result-or-none returns?)
+                 ,@(map local locals)
+                 ,@(map var body))
+              function-section))
+  (add-callable name))
+
+(define (param symbol)
+  `(param ,($ symbol) i32))
+
+(define (local symbol)
+  `(local ,($ symbol) i32))
 
 (define (call name . args)
   `(call ,($ name) ,@(map var args)))
@@ -173,24 +215,20 @@
 (define (not x)
   (eq x 0))
 
-(define-syntax if%
-  (syntax-rules (=> then else)
-    ((_ condition => (then body ...) (else other-body ...))
-     (if-impl #t condition `(,body ...) `(,other-body ...)))
+(define-syntax (wasm-if stx)
+  (syntax-parse stx
+    #:datum-literals (then else)
+    [(_ condition mr:maybe-returns (then body ...) (else other-body ...))
+     #'(if-impl mr.returns? condition (list body ...) (list other-body ...))]
+    [(_ condition mr:maybe-returns body ...)
+     #'(if-impl mr.returns? condition (list body ...) '())]))
 
-    ((_ condition (then body ...) (else other-body ...))
-     (if-impl #f condition `(,body ...) `(,other-body ...)))
-
-    ((_ condition => body ...)
-     (if-impl #t condition `(,body ...) '()))
-
-    ((_ condition body ...)
-     (if-impl #f condition `(,body ...) '()))))
-
-(define (if-impl return condition bodies elses)
+(define (if-impl returns? condition bodies elses)
   (if (pair? elses)
-    `(if ,(result return) ,(var condition) (then ,@bodies) (else ,@elses))
-    `(if ,(result return) ,(var condition) (then ,@bodies))))
+    `(if ,@(result-or-none returns?)
+         ,(var condition) (then ,@bodies) (else ,@elses))
+    `(if ,@(result-or-none returns?)
+         ,(var condition) (then ,@bodies))))
 
 (define (set-local x y)
   `(set_local ,($ x) ,(var y)))

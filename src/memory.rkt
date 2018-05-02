@@ -1,18 +1,15 @@
 #lang racket
 
-(require "utils.rkt")
-
 (provide data mem data-section)
+
+(require
+  racket/list
+  "utils.rkt")
 
 (define *memory* '())
 (define *offsets* (make-hash))
 
-(define (make-entry data)
-  (lambda (m)
-    (cond
-      ((eq? m 'name) (first data))
-      ((eq? m 'offset) (second data))
-      ((eq? m 'value) (third data)))))
+(struct entry (name offset value))
 
 (define (memstring? obj)
   (and (pair? obj) (eq? (car obj) 'memstring)))
@@ -25,8 +22,8 @@
 ;;
 ;; the offset is relative to base-offset
 (define (find-offsets memstr base-offset)
-  (let ((offsets (make-hash))
-        (i 0))
+  (let ([offsets (make-hash)]
+        [i 0])
     (for-each
       (lambda (value)
         (if (symbol? value)
@@ -39,13 +36,14 @@
   (set! *memory* entries)
   (for-each
     (lambda (e)
-      (let* ((entry (make-entry e))
-             (value (entry 'value)))
+      (let* ([the-entry (apply entry e)]
+             [name (entry-name the-entry)]
+             [offset (entry-offset the-entry)]
+             [value (entry-value the-entry)])
         (if (memstring? value)
-          (hash-set! *offsets* (entry 'name) (find-offsets value (entry 'offset)))
-          (hash-set! *offsets* (entry 'name) (entry 'offset)))))
-    entries)
-  *noop*)
+            (hash-set! *offsets* name (find-offsets value offset))
+            (hash-set! *offsets* name offset))))
+    entries))
 
 (define (mem index . subindex)
   (if (and (pair? subindex) (symbol? (car subindex)))
@@ -69,32 +67,30 @@
           #:pad-string "0"
           #:base 16))
 
+  (define (remove-symbols l)
+    (filter (negate symbol?) l))
+
   (define (parse x)
     (if (string? x)
-      x
-      (list->string
-        (flatten
-          (cons #\\
-                (add-between
-                  (cut (string->list (hexa x)) 2)
-                  #\\))))))
+        x
+        (list->string (flatten
+                        (cons #\\ (add-between
+                                    (pack (string->list (hexa x)) 2)
+                                    #\\))))))
 
-  (string-append* (map parse (remove-symbols (memstring-elements memstr)))))
+  (string-append* (map parse
+                       (remove-symbols (memstring-elements memstr)))))
 
 (define (data-section)
   (define (eval-value v)
     (cond
-      ((number? v)
-       (str (format-memstring `(memstring 1 ,v))))
-      ((memstring? v)
-       (str (format-memstring v)))
-      ((string? v)
-       (str v))
-      (else (error 'wrong-data-value v))))
+      [(number? v) (str (format-memstring `(memstring 1 ,v)))]
+      [(memstring? v) (str (format-memstring v))]
+      [(string? v) (str v)]
+      [else (error 'wrong-data-value v)]))
 
-  (map
-    (lambda (e)
-      (let ((entry (make-entry e)))
-      `(data (i32.const ,(entry 'offset))
-             ,(eval-value (entry 'value)))))
-    *memory*))
+  (map (lambda (e)
+         (define the-entry (apply entry e))
+         `(data (i32.const ,(entry-offset the-entry))
+                ,(eval-value (entry-value the-entry))))
+       *memory*))

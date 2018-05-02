@@ -2,30 +2,19 @@
 
 (require racket/syntax)
 
-(provide flatten remove-symbols cut str $ var result *noop*)
+(provide pack $ str var result-or-none)
 
-;; return this value from a procedure in order not to generate any output code
-(define *noop* "")
-
-(define (flatten l)
-  (cond
-    ((null? l) '())
-    ((pair? l) (append (flatten (car l)) (flatten (cdr l))))
-    (else (list l))))
-
-(define (remove-symbols l)
-  (filter (negate symbol?) l))
-
-(define (cut l n)
-   (if (not (empty? l))
-       (cons (take l n) (cut (drop l n) n))
-       '()))
-
-(define (str value)
-  (format "\"~a\"" value))
+(define (pack a-list pack-size)
+  (if (pair? a-list)
+      (cons (take a-list pack-size)
+            (pack (drop a-list pack-size) pack-size))
+      '()))
 
 (define ($ name)
   (format-symbol "$~a" name))
+
+(define (str string)
+  (format "\"~a\"" string))
 
 (define (var x)
   (cond
@@ -33,5 +22,5 @@
     ((number? x) `(i32.const ,x))
     (else x)))
 
-(define (result bool)
-    (if bool '(result i32) *noop*))
+(define (result-or-none returns?)
+    (if returns? '((result i32)) '()))
